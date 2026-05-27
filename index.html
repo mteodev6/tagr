@@ -6,683 +6,459 @@
 <title>CRATE — music collection</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
 <style>
-  :root {
-    --bg: #0a0a0a;
-    --surface: #111111;
-    --surface2: #1a1a1a;
-    --border: #222222;
-    --border2: #2e2e2e;
-    --text: #f0ede6;
-    --muted: #666;
-    --muted2: #444;
-    --accent: #c8f060;
-    --accent2: #8ff0a0;
-    --red: #ff5f5f;
-    --amber: #ffb830;
-    --blue: #60b8ff;
-    --tag-bg: #1e1e1e;
-  }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  html { font-size: 14px; }
-  body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: 'DM Mono', monospace;
-    min-height: 100vh;
-  }
-
-  /* scrollbar */
-  ::-webkit-scrollbar { width: 4px; }
-  ::-webkit-scrollbar-track { background: var(--bg); }
-  ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
-
-  /* layout */
-  .shell { display: flex; height: 100vh; overflow: hidden; }
-
-  /* sidebar */
-  .sidebar {
-    width: 220px;
-    flex-shrink: 0;
-    border-right: 1px solid var(--border);
-    display: flex;
-    flex-direction: column;
-    padding: 0;
-  }
-  .logo {
-    padding: 28px 24px 20px;
-    border-bottom: 1px solid var(--border);
-  }
-  .logo-word {
-    font-family: 'Syne', sans-serif;
-    font-size: 22px;
-    font-weight: 800;
-    letter-spacing: 4px;
-    color: var(--accent);
-  }
-  .logo-sub {
-    font-size: 10px;
-    color: var(--muted);
-    letter-spacing: 2px;
-    margin-top: 4px;
-    text-transform: uppercase;
-  }
-  .nav { padding: 20px 0; flex: 1; }
-  .nav-item {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 10px 24px;
-    cursor: pointer;
-    font-size: 12px;
-    letter-spacing: 1px;
-    color: var(--muted);
-    text-transform: uppercase;
-    transition: color 0.15s;
-    border-left: 2px solid transparent;
-    user-select: none;
-  }
-  .nav-item:hover { color: var(--text); }
-  .nav-item.active { color: var(--accent); border-left-color: var(--accent); }
-  .nav-item svg { width: 15px; height: 15px; flex-shrink: 0; }
-  .nav-count {
-    margin-left: auto;
-    background: var(--border);
-    color: var(--muted);
-    font-size: 10px;
-    padding: 2px 7px;
-    border-radius: 20px;
-  }
-  .nav-item.active .nav-count { background: #1e2a10; color: var(--accent); }
-  .sidebar-stats {
-    padding: 16px 24px;
-    border-top: 1px solid var(--border);
-  }
-  .sidebar-stat { display: flex; justify-content: space-between; align-items: center; padding: 4px 0; }
-  .sidebar-stat-label { font-size: 10px; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; }
-  .sidebar-stat-val { font-size: 12px; font-weight: 500; color: var(--text); }
-
-  /* main */
-  .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
-
-  /* topbar */
-  .topbar {
-    padding: 20px 28px;
-    border-bottom: 1px solid var(--border);
-    display: flex;
-    align-items: center;
-    gap: 12px;
-  }
-  .search-wrap { position: relative; flex: 1; max-width: 320px; }
-  .search-wrap svg { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); width: 14px; height: 14px; color: var(--muted); pointer-events: none; }
-  .search {
-    width: 100%;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    color: var(--text);
-    font-family: 'DM Mono', monospace;
-    font-size: 12px;
-    padding: 8px 12px 8px 36px;
-    border-radius: 6px;
-    outline: none;
-    transition: border-color 0.15s;
-  }
-  .search:focus { border-color: var(--border2); }
-  .search::placeholder { color: var(--muted2); }
-  select {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    color: var(--text);
-    font-family: 'DM Mono', monospace;
-    font-size: 12px;
-    padding: 8px 12px;
-    border-radius: 6px;
-    outline: none;
-    cursor: pointer;
-  }
-  select:focus { border-color: var(--border2); }
-  .topbar-right { margin-left: auto; display: flex; gap: 8px; align-items: center; }
-  .btn {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    padding: 8px 14px;
-    border-radius: 6px;
-    border: 1px solid var(--border);
-    background: transparent;
-    color: var(--text);
-    font-family: 'DM Mono', monospace;
-    font-size: 12px;
-    cursor: pointer;
-    transition: all 0.15s;
-    letter-spacing: 0.5px;
-  }
-  .btn:hover { border-color: var(--border2); background: var(--surface); }
-  .btn-accent { background: var(--accent); color: #0a0a0a; border-color: var(--accent); font-weight: 500; }
-  .btn-accent:hover { background: #d4f570; border-color: #d4f570; }
-  .btn svg { width: 13px; height: 13px; }
-
-  /* content area */
-  .content { flex: 1; overflow-y: auto; padding: 24px 28px; }
-
-  /* wishlist budget bar */
-  .budget-bar {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 14px 18px;
-    margin-bottom: 20px;
-    display: flex;
-    align-items: center;
-    gap: 20px;
-  }
-  .budget-label { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); }
-  .budget-total { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 700; color: var(--accent); }
-  .budget-items { font-size: 11px; color: var(--muted); }
-  .budget-divider { width: 1px; height: 32px; background: var(--border); }
-
-  /* grid for library */
-  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; }
-  .album-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    overflow: hidden;
-    cursor: pointer;
-    transition: border-color 0.15s, transform 0.15s;
-  }
-  .album-card:hover { border-color: var(--border2); transform: translateY(-2px); }
-  .album-art {
-    width: 100%;
-    aspect-ratio: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 40px;
-    position: relative;
-  }
-  .album-art-overlay {
-    position: absolute; inset: 0;
-    background: linear-gradient(to bottom, transparent 50%, rgba(0,0,0,0.7));
-  }
-  .album-card-body { padding: 12px; }
-  .album-title { font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .album-artist { font-size: 11px; color: var(--muted); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .album-footer { display: flex; align-items: center; justify-content: space-between; margin-top: 8px; }
-  .format-badge {
-    font-size: 10px;
-    padding: 2px 7px;
-    border-radius: 3px;
-    font-weight: 500;
-    letter-spacing: 0.5px;
-  }
-  .fmt-flac { background: #0d2010; color: var(--accent2); border: 1px solid #1a4020; }
-  .fmt-mp3 { background: #0d1a2a; color: var(--blue); border: 1px solid #1a3050; }
-  .stars-row { display: flex; gap: 2px; }
-  .star { font-size: 11px; color: var(--muted2); cursor: pointer; transition: color 0.1s; }
-  .star.on { color: var(--amber); }
-  .star:hover { color: var(--amber); }
-
-  /* wishlist rows */
-  .wish-list { display: flex; flex-direction: column; gap: 6px; }
-  .wish-row {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 12px 16px;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    transition: border-color 0.15s;
-  }
-  .wish-row:hover { border-color: var(--border2); }
-  .wish-row.bought { opacity: 0.4; }
-  .priority-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
-  .p-high { background: var(--red); box-shadow: 0 0 6px rgba(255,95,95,0.4); }
-  .p-mid { background: var(--amber); box-shadow: 0 0 6px rgba(255,184,48,0.4); }
-  .p-low { background: var(--muted2); }
-  .wish-art {
-    width: 40px; height: 40px; border-radius: 6px;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 20px; flex-shrink: 0;
-  }
-  .wish-info { flex: 1; min-width: 0; }
-  .wish-title { font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .wish-sub { font-size: 11px; color: var(--muted); margin-top: 2px; }
-  .wish-note { font-size: 10px; color: var(--muted2); font-style: italic; margin-top: 3px; }
-  .wish-meta { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
-  .price-tag {
-    font-family: 'Syne', sans-serif;
-    font-size: 14px;
-    font-weight: 700;
-    color: var(--text);
-  }
-  .genre-pill {
-    font-size: 10px;
-    padding: 2px 8px;
-    border-radius: 20px;
-    background: var(--tag-bg);
-    color: var(--muted);
-    border: 1px solid var(--border);
-    letter-spacing: 0.5px;
-  }
-  .buy-btn {
-    padding: 5px 12px;
-    border-radius: 5px;
-    border: 1px solid var(--border);
-    background: transparent;
-    color: var(--text);
-    font-family: 'DM Mono', monospace;
-    font-size: 11px;
-    cursor: pointer;
-    transition: all 0.15s;
-    white-space: nowrap;
-    letter-spacing: 0.5px;
-  }
-  .buy-btn:hover { border-color: var(--accent); color: var(--accent); }
-  .owned-pill {
-    font-size: 10px;
-    padding: 3px 10px;
-    border-radius: 20px;
-    background: #0d2010;
-    color: var(--accent2);
-    border: 1px solid #1a4020;
-    letter-spacing: 0.5px;
-  }
-
-  /* modal */
-  .modal-backdrop {
-    position: fixed; inset: 0;
-    background: rgba(0,0,0,0.85);
-    display: flex; align-items: center; justify-content: center;
-    z-index: 100;
-    opacity: 0; pointer-events: none;
-    transition: opacity 0.2s;
-  }
-  .modal-backdrop.open { opacity: 1; pointer-events: all; }
-  .modal {
-    background: var(--surface);
-    border: 1px solid var(--border2);
-    border-radius: 10px;
-    width: 440px;
-    max-width: 95vw;
-    padding: 28px;
-    transform: translateY(10px);
-    transition: transform 0.2s;
-  }
-  .modal-backdrop.open .modal { transform: translateY(0); }
-  .modal-title {
-    font-family: 'Syne', sans-serif;
-    font-size: 16px;
-    font-weight: 700;
-    margin-bottom: 20px;
-    color: var(--text);
-  }
-  .field { margin-bottom: 14px; }
-  .field label { display: block; font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); margin-bottom: 6px; }
-  .field input, .field select, .field textarea {
-    width: 100%;
-    background: var(--bg);
-    border: 1px solid var(--border2);
-    color: var(--text);
-    font-family: 'DM Mono', monospace;
-    font-size: 12px;
-    padding: 9px 12px;
-    border-radius: 6px;
-    outline: none;
-    transition: border-color 0.15s;
-  }
-  .field input:focus, .field select:focus, .field textarea:focus { border-color: var(--accent); }
-  .field textarea { resize: vertical; min-height: 60px; }
-  .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-  .modal-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 20px; }
-  .btn-ghost { background: transparent; border-color: var(--border); color: var(--muted); }
-  .btn-ghost:hover { color: var(--text); }
-
-  /* empty state */
-  .empty { text-align: center; padding: 60px 20px; color: var(--muted); font-size: 12px; letter-spacing: 1px; }
-  .empty-icon { font-size: 36px; margin-bottom: 12px; }
-
-  /* toast */
-  .toast {
-    position: fixed; bottom: 24px; right: 24px;
-    background: var(--surface2);
-    border: 1px solid var(--border2);
-    border-radius: 8px;
-    padding: 12px 18px;
-    font-size: 12px;
-    color: var(--text);
-    transform: translateY(20px); opacity: 0;
-    transition: all 0.2s;
-    pointer-events: none;
-    z-index: 200;
-    display: flex; align-items: center; gap: 8px;
-  }
-  .toast.show { transform: translateY(0); opacity: 1; }
-  .toast-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
+  :root{--bg:#0a0a0a;--surface:#111;--surface2:#1a1a1a;--border:#222;--border2:#2e2e2e;--text:#f0ede6;--muted:#666;--muted2:#444;--accent:#c8f060;--accent2:#8ff0a0;--red:#ff5f5f;--amber:#ffb830;--blue:#60b8ff;}
+  *{box-sizing:border-box;margin:0;padding:0;}html{font-size:14px;}
+  body{background:var(--bg);color:var(--text);font-family:'DM Mono',monospace;min-height:100vh;}
+  ::-webkit-scrollbar{width:4px;}::-webkit-scrollbar-track{background:var(--bg);}::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px;}
+  .shell{display:flex;height:100vh;overflow:hidden;}
+  .sidebar{width:220px;flex-shrink:0;border-right:1px solid var(--border);display:flex;flex-direction:column;}
+  .logo{padding:26px 24px 18px;border-bottom:1px solid var(--border);}
+  .logo-word{font-family:'Syne',sans-serif;font-size:22px;font-weight:800;letter-spacing:4px;color:var(--accent);}
+  .logo-sub{font-size:10px;color:var(--muted);letter-spacing:2px;margin-top:4px;text-transform:uppercase;}
+  .nav{padding:18px 0;flex:1;}
+  .nav-item{display:flex;align-items:center;gap:10px;padding:10px 24px;cursor:pointer;font-size:12px;letter-spacing:1px;color:var(--muted);text-transform:uppercase;transition:color .15s;border-left:2px solid transparent;user-select:none;}
+  .nav-item:hover{color:var(--text);}.nav-item.active{color:var(--accent);border-left-color:var(--accent);}
+  .nav-item svg{width:14px;height:14px;flex-shrink:0;}
+  .nav-count{margin-left:auto;background:var(--border);color:var(--muted);font-size:10px;padding:2px 7px;border-radius:20px;}
+  .nav-item.active .nav-count{background:#1e2a10;color:var(--accent);}
+  .sidebar-stats{padding:14px 24px;border-top:1px solid var(--border);}
+  .sidebar-stat{display:flex;justify-content:space-between;align-items:center;padding:3px 0;}
+  .sidebar-stat-label{font-size:10px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;}
+  .sidebar-stat-val{font-size:12px;font-weight:500;}
+  .import-btn{margin:10px 14px 14px;display:flex;align-items:center;gap:6px;padding:8px 12px;border-radius:6px;border:1px dashed var(--border2);background:transparent;color:var(--muted);font-family:'DM Mono',monospace;font-size:11px;cursor:pointer;transition:all .15s;justify-content:center;}
+  .import-btn:hover{border-color:var(--accent);color:var(--accent);}
+  .main{flex:1;display:flex;flex-direction:column;overflow:hidden;}
+  .topbar{padding:14px 26px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+  .search-wrap{position:relative;flex:1;min-width:160px;max-width:280px;}
+  .search-wrap svg{position:absolute;left:10px;top:50%;transform:translateY(-50%);width:13px;height:13px;color:var(--muted);pointer-events:none;}
+  .search{width:100%;background:var(--surface);border:1px solid var(--border);color:var(--text);font-family:'DM Mono',monospace;font-size:12px;padding:7px 10px 7px 30px;border-radius:6px;outline:none;}
+  .search:focus{border-color:var(--border2);}.search::placeholder{color:var(--muted2);}
+  select{background:var(--surface);border:1px solid var(--border);color:var(--text);font-family:'DM Mono',monospace;font-size:12px;padding:7px 10px;border-radius:6px;outline:none;cursor:pointer;}
+  .topbar-right{margin-left:auto;display:flex;gap:8px;}
+  .btn{display:flex;align-items:center;gap:6px;padding:7px 13px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--text);font-family:'DM Mono',monospace;font-size:12px;cursor:pointer;transition:all .15s;}
+  .btn:hover{border-color:var(--border2);background:var(--surface);}
+  .btn-accent{background:var(--accent);color:#0a0a0a;border-color:var(--accent);font-weight:500;}
+  .btn-accent:hover{background:#d4f570;border-color:#d4f570;}.btn svg{width:13px;height:13px;}
+  .content{flex:1;overflow-y:auto;padding:22px 26px;}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(175px,1fr));gap:12px;}
+  .album-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;overflow:hidden;transition:border-color .15s,transform .15s;}
+  .album-card:hover{border-color:var(--border2);transform:translateY(-2px);}
+  .album-art{width:100%;aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:38px;position:relative;background:var(--surface2);overflow:hidden;}
+  .album-art img{width:100%;height:100%;object-fit:cover;position:absolute;inset:0;}
+  .album-art-overlay{position:absolute;inset:0;background:linear-gradient(to bottom,transparent 50%,rgba(0,0,0,.6));}
+  .album-art-emoji{position:relative;z-index:1;}
+  .album-card-body{padding:10px 12px;}
+  .album-title{font-family:'Syne',sans-serif;font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .album-artist{font-size:11px;color:var(--muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .album-footer{display:flex;align-items:center;justify-content:space-between;margin-top:8px;}
+  .format-badge{font-size:10px;padding:2px 7px;border-radius:3px;font-weight:500;}
+  .fmt-flac{background:#0d2010;color:var(--accent2);border:1px solid #1a4020;}
+  .fmt-mp3{background:#0d1a2a;color:var(--blue);border:1px solid #1a3050;}
+  .fmt-bc{background:#1a1000;color:var(--amber);border:1px solid #3a2800;}
+  .stars-row{display:flex;gap:2px;}
+  .star{font-size:11px;color:var(--muted2);cursor:pointer;transition:color .1s;}.star.on{color:var(--amber);}
+  .budget-bar{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:14px 18px;margin-bottom:16px;display:flex;align-items:center;gap:20px;}
+  .budget-label{font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);}
+  .budget-total{font-family:'Syne',sans-serif;font-size:20px;font-weight:700;color:var(--accent);}
+  .budget-divider{width:1px;height:32px;background:var(--border);}
+  .wish-list{display:flex;flex-direction:column;gap:6px;}
+  .wish-row{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:10px 14px;display:flex;align-items:center;gap:12px;transition:border-color .15s;}
+  .wish-row:hover{border-color:var(--border2);}.wish-row.bought{opacity:.4;}
+  .priority-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+  .p-high{background:var(--red);box-shadow:0 0 6px rgba(255,95,95,.4);}
+  .p-mid{background:var(--amber);}.p-low{background:var(--muted2);}
+  .wish-art{width:40px;height:40px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;background:var(--surface2);overflow:hidden;position:relative;}
+  .wish-art img{width:100%;height:100%;object-fit:cover;position:absolute;inset:0;}
+  .wish-art-emoji{position:relative;z-index:1;}
+  .wish-info{flex:1;min-width:0;}
+  .wish-title{font-family:'Syne',sans-serif;font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .wish-sub{font-size:11px;color:var(--muted);margin-top:2px;}
+  .wish-note{font-size:10px;color:var(--muted2);font-style:italic;margin-top:2px;}
+  .wish-meta{display:flex;align-items:center;gap:10px;flex-shrink:0;}
+  .price-tag{font-family:'Syne',sans-serif;font-size:14px;font-weight:700;}
+  .genre-pill{font-size:10px;padding:2px 8px;border-radius:20px;background:#1e1e1e;color:var(--muted);border:1px solid var(--border);}
+  .buy-btn{padding:5px 11px;border-radius:5px;border:1px solid var(--border);background:transparent;color:var(--text);font-family:'DM Mono',monospace;font-size:11px;cursor:pointer;transition:all .15s;white-space:nowrap;}
+  .buy-btn:hover{border-color:var(--accent);color:var(--accent);}
+  .owned-pill{font-size:10px;padding:3px 10px;border-radius:20px;background:#0d2010;color:var(--accent2);border:1px solid #1a4020;}
+  .modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.88);display:flex;align-items:center;justify-content:center;z-index:100;opacity:0;pointer-events:none;transition:opacity .2s;}
+  .modal-backdrop.open{opacity:1;pointer-events:all;}
+  .modal{background:var(--surface);border:1px solid var(--border2);border-radius:10px;width:500px;max-width:96vw;max-height:90vh;overflow-y:auto;padding:24px;transform:translateY(10px);transition:transform .2s;}
+  .modal-backdrop.open .modal{transform:translateY(0);}
+  .modal-title{font-family:'Syne',sans-serif;font-size:16px;font-weight:700;margin-bottom:16px;}
+  .field{margin-bottom:11px;}
+  .field label{display:block;font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:5px;}
+  .field input,.field select,.field textarea{width:100%;background:var(--bg);border:1px solid var(--border2);color:var(--text);font-family:'DM Mono',monospace;font-size:12px;padding:8px 10px;border-radius:6px;outline:none;transition:border-color .15s;}
+  .field input:focus,.field select:focus,.field textarea:focus{border-color:var(--accent);}
+  .field textarea{resize:vertical;min-height:50px;}
+  .field-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+  .modal-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:16px;}
+  .btn-ghost{background:transparent;border-color:var(--border);color:var(--muted);}.btn-ghost:hover{color:var(--text);}
+  .mb-search-wrap{position:relative;}.mb-search-wrap input{padding-right:76px;}
+  .mb-search-btn{position:absolute;right:6px;top:50%;transform:translateY(-50%);padding:4px 10px;border-radius:4px;border:1px solid var(--border2);background:var(--surface2);color:var(--text);font-family:'DM Mono',monospace;font-size:11px;cursor:pointer;transition:all .15s;}
+  .mb-search-btn:hover{border-color:var(--accent);color:var(--accent);}
+  .mb-results{margin-top:8px;display:flex;flex-direction:column;gap:5px;max-height:220px;overflow-y:auto;}
+  .mb-result{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:6px;border:1px solid var(--border);cursor:pointer;transition:border-color .15s;}
+  .mb-result:hover{border-color:var(--border2);}.mb-result.selected{border-color:var(--accent);background:#1a2510;}
+  .mb-result-art{width:34px;height:34px;border-radius:4px;background:var(--surface2);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:14px;overflow:hidden;}
+  .mb-result-art img{width:100%;height:100%;object-fit:cover;}
+  .mb-result-info{flex:1;min-width:0;}
+  .mb-result-title{font-size:12px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .mb-result-sub{font-size:11px;color:var(--muted);margin-top:1px;}
+  .mb-loading{text-align:center;padding:14px;font-size:11px;color:var(--muted);}
+  .mb-divider{display:flex;align-items:center;gap:10px;margin:14px 0 10px;}
+  .mb-divider span{font-size:10px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;white-space:nowrap;}
+  .mb-divider::before,.mb-divider::after{content:'';flex:1;height:1px;background:var(--border);}
+  .art-preview{display:none;align-items:center;gap:10px;margin-top:10px;padding:8px 10px;background:var(--surface2);border-radius:6px;border:1px solid var(--border);}
+  .art-preview img{width:44px;height:44px;border-radius:5px;object-fit:cover;}
+  .art-preview-label{font-size:11px;color:var(--muted);}
+  .bc-steps{margin:12px 0;}
+  .bc-step{display:flex;gap:12px;padding:9px 0;border-bottom:1px solid var(--border);}
+  .bc-step:last-child{border-bottom:none;}
+  .bc-step-num{width:20px;height:20px;border-radius:50%;background:var(--accent);color:#0a0a0a;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;}
+  .bc-step-text{font-size:12px;color:var(--muted);line-height:1.6;}
+  .bc-step-text a{color:var(--accent);text-decoration:none;}.bc-step-text a:hover{text-decoration:underline;}
+  .drop-zone{border:2px dashed var(--border2);border-radius:8px;padding:26px;text-align:center;cursor:pointer;transition:all .15s;margin-top:14px;}
+  .drop-zone:hover,.drop-zone.drag-over{border-color:var(--accent);background:#0f1a08;}
+  .drop-zone-icon{font-size:26px;margin-bottom:8px;}
+  .drop-zone-text{font-size:12px;color:var(--muted);}.drop-zone-text strong{color:var(--text);}
+  .toast{position:fixed;bottom:22px;right:22px;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:10px 16px;font-size:12px;color:var(--text);transform:translateY(20px);opacity:0;transition:all .2s;pointer-events:none;z-index:200;display:flex;align-items:center;gap:8px;}
+  .toast.show{transform:translateY(0);opacity:1;}
+  .toast-dot{width:6px;height:6px;border-radius:50%;background:var(--accent);flex-shrink:0;}
+  .empty{text-align:center;padding:60px 20px;color:var(--muted);font-size:12px;letter-spacing:1px;}
+  .empty-icon{font-size:34px;margin-bottom:12px;}
 </style>
 </head>
 <body>
-
 <div class="shell">
-  <!-- sidebar -->
   <aside class="sidebar">
-    <div class="logo">
-      <div class="logo-word">CRATE</div>
-      <div class="logo-sub">music collection</div>
-    </div>
+    <div class="logo"><div class="logo-word">CRATE</div><div class="logo-sub">music collection</div></div>
     <nav class="nav">
       <div class="nav-item active" onclick="setTab('library')" id="nav-library">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3"/><line x1="3" y1="12" x2="9" y2="12"/><line x1="15" y1="12" x2="21" y2="12"/></svg>
-        Library
-        <span class="nav-count" id="lib-count">0</span>
+        Library <span class="nav-count" id="lib-count">0</span>
       </div>
       <div class="nav-item" onclick="setTab('wishlist')" id="nav-wishlist">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
-        Wishlist
-        <span class="nav-count" id="wish-count">0</span>
+        Wishlist <span class="nav-count" id="wish-count">0</span>
       </div>
     </nav>
     <div class="sidebar-stats">
-      <div class="sidebar-stat">
-        <span class="sidebar-stat-label">FLAC</span>
-        <span class="sidebar-stat-val" id="stat-flac">0</span>
-      </div>
-      <div class="sidebar-stat">
-        <span class="sidebar-stat-label">MP3</span>
-        <span class="sidebar-stat-val" id="stat-mp3">0</span>
-      </div>
-      <div class="sidebar-stat">
-        <span class="sidebar-stat-label">Avg rating</span>
-        <span class="sidebar-stat-val" id="stat-rating">—</span>
-      </div>
+      <div class="sidebar-stat"><span class="sidebar-stat-label">FLAC</span><span class="sidebar-stat-val" id="stat-flac">0</span></div>
+      <div class="sidebar-stat"><span class="sidebar-stat-label">MP3</span><span class="sidebar-stat-val" id="stat-mp3">0</span></div>
+      <div class="sidebar-stat"><span class="sidebar-stat-label">Avg rating</span><span class="sidebar-stat-val" id="stat-rating">—</span></div>
     </div>
+    <button class="import-btn" onclick="openImport()">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+      import bandcamp csv
+    </button>
   </aside>
-
-  <!-- main -->
   <main class="main">
     <div class="topbar">
       <div class="search-wrap">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-        <input class="search" type="text" placeholder="search artist, album..." id="search" oninput="render()" />
+        <input class="search" type="text" placeholder="search artist, album..." id="search" oninput="render()"/>
       </div>
       <select id="genre-filter" onchange="render()">
         <option value="">all genres</option>
-        <option>hyperpop</option>
-        <option>digicore</option>
-        <option>electronic</option>
-        <option>hip-hop</option>
-        <option>experimental</option>
-        <option>ambient</option>
-        <option>noise</option>
+        <option>hyperpop</option><option>digicore</option><option>electronic</option>
+        <option>hip-hop</option><option>experimental</option><option>ambient</option><option>noise</option>
       </select>
       <div class="topbar-right">
-        <button class="btn btn-accent" onclick="openModal()">
+        <button class="btn btn-accent" onclick="openAdd()">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
           add
         </button>
       </div>
     </div>
-
     <div class="content" id="content"></div>
   </main>
 </div>
 
-<!-- modal -->
-<div class="modal-backdrop" id="modal-backdrop" onclick="closeModalBg(event)">
+<!-- add modal -->
+<div class="modal-backdrop" id="add-modal" onclick="bgClose(event,'add-modal')">
   <div class="modal">
     <div class="modal-title" id="modal-title">add to library</div>
-    <div class="field-row">
-      <div class="field"><label>artist</label><input type="text" id="f-artist" placeholder="e.g. Heaven Pierce Her" /></div>
-      <div class="field"><label>album</label><input type="text" id="f-album" placeholder="e.g. Epitaph" /></div>
-    </div>
-    <div class="field-row">
-      <div class="field"><label>year</label><input type="number" id="f-year" placeholder="2024" min="1900" max="2099" /></div>
-      <div class="field"><label>genre</label>
-        <select id="f-genre">
-          <option value="">select...</option>
-          <option>hyperpop</option><option>digicore</option><option>electronic</option>
-          <option>hip-hop</option><option>experimental</option><option>ambient</option><option>noise</option>
-        </select>
+    <div class="field">
+      <label>search musicbrainz · or paste a release url / id</label>
+      <div class="mb-search-wrap">
+        <input type="text" id="mb-query" placeholder="artist + album, or musicbrainz.org/release/..." onkeydown="if(event.key==='Enter')mbSearch()"/>
+        <button class="mb-search-btn" onclick="mbSearch()">search</button>
       </div>
     </div>
-    <!-- library-only fields -->
+    <div id="mb-results-wrap" style="display:none"><div class="mb-results" id="mb-results"></div></div>
+    <div class="mb-divider"><span>or fill in manually</span></div>
+    <div class="field-row">
+      <div class="field"><label>artist</label><input type="text" id="f-artist" placeholder="e.g. JPEGMAFIA"/></div>
+      <div class="field"><label>album</label><input type="text" id="f-album" placeholder="e.g. LP!"/></div>
+    </div>
+    <div class="field-row">
+      <div class="field"><label>year</label><input type="number" id="f-year" placeholder="2024"/></div>
+      <div class="field"><label>genre</label>
+        <select id="f-genre"><option value="">select...</option><option>hyperpop</option><option>digicore</option><option>electronic</option><option>hip-hop</option><option>experimental</option><option>ambient</option><option>noise</option></select>
+      </div>
+    </div>
     <div id="lib-fields">
       <div class="field-row">
-        <div class="field"><label>format</label>
-          <select id="f-format"><option>FLAC</option><option>MP3</option></select>
-        </div>
-        <div class="field"><label>source</label>
-          <select id="f-source"><option>Bandcamp</option><option>Soulseek</option><option>Other</option></select>
-        </div>
+        <div class="field"><label>format</label><select id="f-format"><option>FLAC</option><option>MP3</option></select></div>
+        <div class="field"><label>source</label><select id="f-source"><option>Bandcamp</option><option>Soulseek</option><option>Other</option></select></div>
       </div>
-      <div class="field"><label>notes</label><textarea id="f-notes" placeholder="optional notes..."></textarea></div>
+      <div class="field"><label>notes</label><textarea id="f-notes" placeholder="optional..."></textarea></div>
     </div>
-    <!-- wishlist-only fields -->
     <div id="wish-fields" style="display:none">
       <div class="field-row">
-        <div class="field"><label>price ($)</label><input type="number" id="f-price" placeholder="12" min="0" step="0.01" /></div>
-        <div class="field"><label>priority</label>
-          <select id="f-priority"><option value="high">high</option><option value="mid" selected>mid</option><option value="low">low</option></select>
-        </div>
+        <div class="field"><label>price ($)</label><input type="number" id="f-price" placeholder="12" min="0" step="0.01"/></div>
+        <div class="field"><label>priority</label><select id="f-priority"><option value="high">high</option><option value="mid" selected>mid</option><option value="low">low</option></select></div>
       </div>
-      <div class="field"><label>notes</label><input type="text" id="f-wish-notes" placeholder="e.g. wait for sale..." /></div>
+      <div class="field"><label>notes</label><input type="text" id="f-wish-notes" placeholder="e.g. wait for sale..."/></div>
+    </div>
+    <div class="art-preview" id="art-preview">
+      <img id="preview-img" src="" alt=""/>
+      <span class="art-preview-label">cover art found ✓</span>
     </div>
     <div class="modal-actions">
-      <button class="btn btn-ghost" onclick="closeModal()">cancel</button>
+      <button class="btn btn-ghost" onclick="closeModal('add-modal')">cancel</button>
       <button class="btn btn-accent" onclick="saveItem()">save</button>
     </div>
   </div>
 </div>
 
-<!-- toast -->
+<!-- import modal -->
+<div class="modal-backdrop" id="import-modal" onclick="bgClose(event,'import-modal')">
+  <div class="modal" style="width:470px">
+    <div class="modal-title">import from bandcamp</div>
+    <p style="font-size:12px;color:var(--muted);line-height:1.6">Bandcamp lets you export a CSV of everything you own. Here's how:</p>
+    <div class="bc-steps">
+      <div class="bc-step"><div class="bc-step-num">1</div><div class="bc-step-text">Go to <a href="https://bandcamp.com/settings" target="_blank">bandcamp.com/settings</a> → scroll to <strong>Download your data</strong></div></div>
+      <div class="bc-step"><div class="bc-step-num">2</div><div class="bc-step-text">Click <strong>Request your data</strong> — Bandcamp emails you a link (usually a few minutes)</div></div>
+      <div class="bc-step"><div class="bc-step-num">3</div><div class="bc-step-text">Download the zip, open it, find <strong>collection.csv</strong> inside</div></div>
+      <div class="bc-step"><div class="bc-step-num">4</div><div class="bc-step-text">Drop it below — CRATE imports everything and fetches album art automatically</div></div>
+    </div>
+    <div class="drop-zone" id="drop-zone" onclick="document.getElementById('bc-file').click()" ondragover="dragOver(event)" ondragleave="dragLeave()" ondrop="dropFile(event)">
+      <div class="drop-zone-icon">📂</div>
+      <div class="drop-zone-text"><strong>drop collection.csv here</strong><br>or click to browse</div>
+    </div>
+    <input type="file" id="bc-file" accept=".csv" style="display:none" onchange="handleFile(event)"/>
+    <div id="import-status" style="margin-top:12px;font-size:12px;color:var(--muted);text-align:center;min-height:18px;"></div>
+    <div class="modal-actions"><button class="btn btn-ghost" onclick="closeModal('import-modal')">close</button></div>
+  </div>
+</div>
+
 <div class="toast" id="toast"><div class="toast-dot"></div><span id="toast-msg"></span></div>
 
 <script>
-let tab = 'library';
-
-let library = [
-  { id:1, artist:'Heaven Pierce Her', album:'Epitaph', year:2023, genre:'hyperpop', format:'FLAC', source:'Bandcamp', rating:5, notes:'absolutely essential' },
-  { id:2, artist:'JPEGMAFIA', album:'LP!', year:2021, genre:'experimental', format:'FLAC', source:'Bandcamp', rating:5, notes:'' },
-  { id:3, artist:'femtanyl', album:'Girly', year:2022, genre:'digicore', format:'MP3', source:'Soulseek', rating:4, notes:'' },
-  { id:4, artist:'Charli XCX', album:'Brat', year:2024, genre:'hyperpop', format:'FLAC', source:'Bandcamp', rating:4, notes:'' },
-  { id:5, artist:'Machine Girl', album:'WLFGRL', year:2016, genre:'electronic', format:'FLAC', source:'Bandcamp', rating:5, notes:'classic' },
-  { id:6, artist:'100 gecs', album:'10000 gecs', year:2023, genre:'hyperpop', format:'FLAC', source:'Bandcamp', rating:4, notes:'' },
+let tab='library', selArt=null, selMbId=null;
+let library=[
+  {id:1,artist:'Heaven Pierce Her',album:'Epitaph',year:2023,genre:'hyperpop',format:'FLAC',source:'Bandcamp',rating:5,notes:'absolutely essential',artUrl:null,mbId:null},
+  {id:2,artist:'JPEGMAFIA',album:'LP!',year:2021,genre:'experimental',format:'FLAC',source:'Bandcamp',rating:5,notes:'',artUrl:null,mbId:null},
+  {id:3,artist:'femtanyl',album:'Girly',year:2022,genre:'digicore',format:'MP3',source:'Soulseek',rating:4,notes:'',artUrl:null,mbId:null},
+  {id:4,artist:'Charli XCX',album:'Brat',year:2024,genre:'hyperpop',format:'FLAC',source:'Bandcamp',rating:4,notes:'',artUrl:null,mbId:null},
+  {id:5,artist:'Machine Girl',album:'WLFGRL',year:2016,genre:'electronic',format:'FLAC',source:'Bandcamp',rating:5,notes:'classic',artUrl:null,mbId:null},
 ];
-
-let wishlist = [
-  { id:1, artist:'JPEGMAFIA', album:'Scaring the Hoes', year:2023, genre:'experimental', price:12, priority:'high', notes:'w/ Danny Brown', bought:false },
-  { id:2, artist:'Hannah Diamond', album:'Reflections', year:2019, genre:'hyperpop', price:8, priority:'mid', notes:'', bought:false },
-  { id:3, artist:'Machine Girl', album:'NMBR', year:2020, genre:'electronic', price:10, priority:'low', notes:'wait for sale', bought:false },
-  { id:4, artist:'Black Dresses', album:'Forget Your Own Face', year:2020, genre:'digicore', price:7, priority:'high', notes:'', bought:false },
-  { id:5, artist:'yeule', album:'softscars', year:2023, genre:'experimental', price:9, priority:'mid', notes:'physical vinyl preferred', bought:false },
+let wishlist=[
+  {id:1,artist:'JPEGMAFIA',album:'Scaring the Hoes',year:2023,genre:'experimental',price:12,priority:'high',notes:'w/ Danny Brown',bought:false,artUrl:null},
+  {id:2,artist:'Hannah Diamond',album:'Reflections',year:2019,genre:'hyperpop',price:8,priority:'mid',notes:'',bought:false,artUrl:null},
+  {id:3,artist:'Machine Girl',album:'NMBR',year:2020,genre:'electronic',price:10,priority:'low',notes:'wait for sale',bought:false,artUrl:null},
+  {id:4,artist:'yeule',album:'softscars',year:2023,genre:'experimental',price:9,priority:'mid',notes:'',bought:false,artUrl:null},
 ];
+const COLORS=['#1a2510','#10181a','#1a1018','#181510','#101820','#1a1010','#121a10'];
+const EMOJIS=['🎵','💿','🌀','⚡','🖤','🔊','🎧','💜','🧨','🌙'];
+function hash(s){let h=5381;for(let i=0;i<s.length;i++)h=((h<<5)+h)+s.charCodeAt(i);return Math.abs(h);}
+function bg(s){return COLORS[hash(s)%COLORS.length];}
+function em(s){return EMOJIS[hash(s)%EMOJIS.length];}
 
-const artColors = ['#1a2510','#10181a','#1a1018','#181510','#101820','#1a1010','#121a10'];
-const artEmojis = ['🎵','💿','🌀','⚡','🖤','🔊','🎧','💜','🧨','🌙'];
-
-function hashStr(s) { let h=5381; for(let i=0;i<s.length;i++) h=((h<<5)+h)+s.charCodeAt(i); return Math.abs(h); }
-function artBg(s) { return artColors[hashStr(s) % artColors.length]; }
-function artEmoji(s) { return artEmojis[hashStr(s) % artEmojis.length]; }
-
-function setTab(t) {
-  tab = t;
-  document.getElementById('nav-library').classList.toggle('active', t==='library');
-  document.getElementById('nav-wishlist').classList.toggle('active', t==='wishlist');
-  document.getElementById('modal-title').textContent = t==='library' ? 'add to library' : 'add to wishlist';
-  render();
+// ── ART ──────────────────────────────────────────────────
+const artCache={};
+function imgExists(url){return new Promise(res=>{const i=new Image();i.onload=()=>res(true);i.onerror=()=>res(false);i.src=url;});}
+async function itunesArt(artist,album){
+  try{const q=encodeURIComponent(artist+' '+album);const r=await fetch('https://itunes.apple.com/search?term='+q+'&entity=album&limit=3');const d=await r.json();if(d.results&&d.results.length)return d.results[0].artworkUrl100.replace('100x100bb','600x600bb');}catch(e){}return null;
 }
-
-function starsHtml(rating, id) {
-  return Array.from({length:5},(_,i)=>
-    `<span class="star${i<rating?' on':''}" onclick="rate(${id},${i+1})" title="${i+1} star">★</span>`
-  ).join('');
+async function getArt(artist,album,mbId){
+  const key=mbId||artist+'::'+album;
+  if(artCache[key]!==undefined)return artCache[key];
+  artCache[key]=null;
+  if(mbId){const url='https://coverartarchive.org/release/'+mbId+'/front-250';if(await imgExists(url)){artCache[key]=url;return url;}}
+  try{
+    const q=encodeURIComponent('artist:"'+artist+'" release:"'+album+'"');
+    const r=await fetch('https://musicbrainz.org/ws/2/release/?query='+q+'&limit=3&fmt=json',{headers:{'User-Agent':'CRATE/1.0 (music-collection-app)'}});
+    const d=await r.json();
+    if(d.releases&&d.releases.length){for(const rel of d.releases){const url='https://coverartarchive.org/release/'+rel.id+'/front-250';if(await imgExists(url)){artCache[key]=url;return url;}}}
+  }catch(e){}
+  const it=await itunesArt(artist,album);artCache[key]=it;return it;
 }
-
-function renderLibrary(items) {
-  if (!items.length) return `<div class="empty"><div class="empty-icon">💿</div>no albums yet — add some</div>`;
-  return `<div class="grid">${items.map(x=>`
-    <div class="album-card">
-      <div class="album-art" style="background:${artBg(x.album)}">
-        <span style="position:relative;z-index:1">${artEmoji(x.artist)}</span>
-        <div class="album-art-overlay"></div>
-      </div>
-      <div class="album-card-body">
-        <div class="album-title">${x.album}</div>
-        <div class="album-artist">${x.artist}</div>
-        <div class="album-footer">
-          <span class="format-badge fmt-${x.format.toLowerCase()}">${x.format}</span>
-          <div class="stars-row">${starsHtml(x.rating, x.id)}</div>
-        </div>
-        ${x.notes?`<div style="font-size:10px;color:var(--muted2);margin-top:6px;font-style:italic">${x.notes}</div>`:''}
-      </div>
-    </div>
-  `).join('')}</div>`;
-}
-
-function renderWishlist(items) {
-  const pending = items.filter(x=>!x.bought);
-  const total = pending.reduce((s,x)=>s+x.price,0);
-  const budgetBar = `
-    <div class="budget-bar">
-      <div>
-        <div class="budget-label">wishlist total</div>
-        <div class="budget-total">$${total.toFixed(2)}</div>
-      </div>
-      <div class="budget-divider"></div>
-      <div>
-        <div class="budget-label">pending</div>
-        <div style="font-size:16px;font-family:'Syne',sans-serif;font-weight:700;color:var(--text)">${pending.length} albums</div>
-      </div>
-    </div>
-  `;
-  if (!items.length) return budgetBar + `<div class="empty"><div class="empty-icon">🎵</div>wishlist is empty</div>`;
-  return budgetBar + `<div class="wish-list">${items.map(x=>`
-    <div class="wish-row${x.bought?' bought':''}">
-      <div class="priority-dot p-${x.priority}"></div>
-      <div class="wish-art" style="background:${artBg(x.album)}">${artEmoji(x.artist)}</div>
-      <div class="wish-info">
-        <div class="wish-title">${x.album}</div>
-        <div class="wish-sub">${x.artist} · ${x.year}</div>
-        ${x.notes?`<div class="wish-note">${x.notes}</div>`:''}
-      </div>
-      <div class="wish-meta">
-        <span class="genre-pill">${x.genre}</span>
-        <span class="price-tag">$${x.price.toFixed(2)}</span>
-        ${x.bought
-          ? `<span class="owned-pill">✓ owned</span>`
-          : `<button class="buy-btn" onclick="markBought(${x.id})">i bought this</button>`
-        }
-      </div>
-    </div>
-  `).join('')}</div>`;
-}
-
-function render() {
-  const q = document.getElementById('search').value.toLowerCase();
-  const g = document.getElementById('genre-filter').value;
-
-  const libFiltered = library.filter(x=>
-    (!q||x.artist.toLowerCase().includes(q)||x.album.toLowerCase().includes(q))&&
-    (!g||x.genre===g)
-  );
-  const wishFiltered = wishlist.filter(x=>
-    (!q||x.artist.toLowerCase().includes(q)||x.album.toLowerCase().includes(q))&&
-    (!g||x.genre===g)
-  );
-
-  document.getElementById('lib-count').textContent = library.length;
-  document.getElementById('wish-count').textContent = wishlist.filter(x=>!x.bought).length;
-
-  const flacs = library.filter(x=>x.format==='FLAC').length;
-  const mp3s = library.filter(x=>x.format==='MP3').length;
-  const rated = library.filter(x=>x.rating>0);
-  const avg = rated.length ? (rated.reduce((s,x)=>s+x.rating,0)/rated.length).toFixed(1) : '—';
-  document.getElementById('stat-flac').textContent = flacs;
-  document.getElementById('stat-mp3').textContent = mp3s;
-  document.getElementById('stat-rating').textContent = avg;
-
-  document.getElementById('content').innerHTML = tab==='library'
-    ? renderLibrary(libFiltered)
-    : renderWishlist(wishFiltered);
-}
-
-function rate(id, n) {
-  const x = library.find(x=>x.id===id);
-  if(x) { x.rating = n; render(); }
-}
-
-function markBought(id) {
-  const x = wishlist.find(x=>x.id===id);
-  if(!x) return;
-  x.bought = true;
-  library.push({
-    id: library.length+1,
-    artist: x.artist, album: x.album, year: x.year, genre: x.genre,
-    format:'FLAC', source:'Bandcamp', rating:0, notes:''
-  });
-  render();
-  showToast(`"${x.album}" moved to library`);
-}
-
-// modal
-function openModal() {
-  document.getElementById('lib-fields').style.display = tab==='library'?'block':'none';
-  document.getElementById('wish-fields').style.display = tab==='wishlist'?'block':'none';
-  document.getElementById('modal-title').textContent = tab==='library' ? 'add to library' : 'add to wishlist';
-  clearModal();
-  document.getElementById('modal-backdrop').classList.add('open');
-}
-function closeModal() { document.getElementById('modal-backdrop').classList.remove('open'); }
-function closeModalBg(e) { if(e.target===document.getElementById('modal-backdrop')) closeModal(); }
-function clearModal() {
-  ['f-artist','f-album','f-year','f-notes','f-wish-notes','f-price'].forEach(id=>{
-    const el=document.getElementById(id); if(el) el.value='';
-  });
-  document.getElementById('f-genre').value='';
-  document.getElementById('f-format').value='FLAC';
-  document.getElementById('f-source').value='Bandcamp';
-  document.getElementById('f-priority').value='mid';
-}
-function saveItem() {
-  const artist = document.getElementById('f-artist').value.trim();
-  const album = document.getElementById('f-album').value.trim();
-  if(!artist||!album) { showToast('artist and album are required'); return; }
-  const year = parseInt(document.getElementById('f-year').value)||new Date().getFullYear();
-  const genre = document.getElementById('f-genre').value||'other';
-
-  if(tab==='library') {
-    library.push({
-      id: library.length+1, artist, album, year, genre,
-      format: document.getElementById('f-format').value,
-      source: document.getElementById('f-source').value,
-      rating: 0,
-      notes: document.getElementById('f-notes').value.trim()
-    });
-    showToast(`"${album}" added to library`);
-  } else {
-    const price = parseFloat(document.getElementById('f-price').value)||0;
-    wishlist.push({
-      id: wishlist.length+1, artist, album, year, genre, price,
-      priority: document.getElementById('f-priority').value,
-      notes: document.getElementById('f-wish-notes').value.trim(),
-      bought: false
-    });
-    showToast(`"${album}" added to wishlist`);
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+async function loadAllArt(){
+  for(const item of [...library,...wishlist]){
+    if(item.artUrl)continue;
+    const url=await getArt(item.artist,item.album,item.mbId||null);
+    if(url){item.artUrl=url;render();}
+    await sleep(150);
   }
-  closeModal();
+}
+
+// ── MUSICBRAINZ ──────────────────────────────────────────
+function artistStr(rel){if(!rel['artist-credit'])return '';return rel['artist-credit'].map(a=>typeof a==='string'?a:(a.artist?.name||'')).join('');}
+async function mbSearch(){
+  const q=document.getElementById('mb-query').value.trim();if(!q)return;
+  const wrap=document.getElementById('mb-results-wrap'),el=document.getElementById('mb-results');
+  wrap.style.display='block';el.innerHTML='<div class="mb-loading">searching musicbrainz...</div>';
+  const m=q.match(/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})/i);
+  if(m){await mbById(m[1]);return;}
+  try{
+    const r=await fetch('https://musicbrainz.org/ws/2/release/?query='+encodeURIComponent(q)+'&limit=10&fmt=json',{headers:{'User-Agent':'CRATE/1.0 (music-collection-app)'}});
+    const d=await r.json();
+    if(!d.releases||!d.releases.length){el.innerHTML='<div class="mb-loading">no results</div>';return;}
+    const seen=new Set();
+    const releases=d.releases.filter(r=>{const k=artistStr(r)+'::'+r.title;if(seen.has(k))return false;seen.add(k);return true;}).slice(0,6);
+    showMbResults(releases.map(r=>({id:r.id,title:r.title,artist:artistStr(r),date:r.date||''})));
+  }catch(e){el.innerHTML='<div class="mb-loading">search failed</div>';}
+}
+async function mbById(id){
+  const el=document.getElementById('mb-results');
+  try{const r=await fetch('https://musicbrainz.org/ws/2/release/'+id+'?inc=artist-credits&fmt=json',{headers:{'User-Agent':'CRATE/1.0 (music-collection-app)'}});const d=await r.json();showMbResults([{id:d.id,title:d.title,artist:artistStr(d),date:d.date||''}]);}
+  catch(e){el.innerHTML='<div class="mb-loading">could not fetch release</div>';}
+}
+function showMbResults(results){
+  const el=document.getElementById('mb-results');
+  el.innerHTML=results.map(r=>`<div class="mb-result" id="mbr-${r.id}" onclick="selectMb('${r.id}','${esc(r.title)}','${esc(r.artist)}','${r.date}')"><div class="mb-result-art" id="mbra-${r.id}">💿</div><div class="mb-result-info"><div class="mb-result-title">${r.title}</div><div class="mb-result-sub">${r.artist}${r.date?' · '+r.date.slice(0,4):''}</div></div></div>`).join('');
+  results.forEach(async r=>{
+    const artEl=document.getElementById('mbra-'+r.id);if(!artEl)return;
+    const caa='https://coverartarchive.org/release/'+r.id+'/front-250';
+    if(await imgExists(caa)){if(artEl)artEl.innerHTML='<img src="'+caa+'"/>';return;}
+    const it=await itunesArt(r.artist,r.title);if(it&&artEl)artEl.innerHTML='<img src="'+it+'"/>';
+  });
+}
+async function selectMb(id,title,artist,date){
+  document.querySelectorAll('.mb-result').forEach(e=>e.classList.remove('selected'));
+  document.getElementById('mbr-'+id)?.classList.add('selected');
+  selMbId=id;
+  document.getElementById('f-artist').value=artist;
+  document.getElementById('f-album').value=title;
+  const yr=date?parseInt(date.slice(0,4)):null;if(yr)document.getElementById('f-year').value=yr;
+  const preview=document.getElementById('art-preview'),img=document.getElementById('preview-img');
+  const caa='https://coverartarchive.org/release/'+id+'/front-250';
+  if(await imgExists(caa)){img.src=caa;selArt=caa;preview.style.display='flex';}
+  else{const it=await itunesArt(artist,title);if(it){img.src=it;selArt=it;preview.style.display='flex';}}
+}
+function esc(s){return s.replace(/\\/g,'\\\\').replace(/'/g,"\\'");}
+
+// ── RENDER ───────────────────────────────────────────────
+function setTab(t){tab=t;document.getElementById('nav-library').classList.toggle('active',t==='library');document.getElementById('nav-wishlist').classList.toggle('active',t==='wishlist');render();}
+function starsHtml(rating,id){return Array.from({length:5},(_,i)=>`<span class="star${i<rating?' on':''}" onclick="rate(${id},${i+1})">★</span>`).join('');}
+function artBlock(item,size){
+  const b=bg(item.album),e=em(item.artist);
+  if(size==='full')return`<div class="album-art" style="background:${b}">${item.artUrl?`<img src="${item.artUrl}" onerror="this.style.display='none'"/>`:''}  <div class="album-art-overlay"></div><span class="album-art-emoji">${e}</span></div>`;
+  return`<div class="wish-art" style="background:${b}">${item.artUrl?`<img src="${item.artUrl}" onerror="this.style.display='none'"/>`:''}  <span class="wish-art-emoji">${e}</span></div>`;
+}
+function renderLibrary(items){
+  if(!items.length)return'<div class="empty"><div class="empty-icon">💿</div>no albums yet</div>';
+  return'<div class="grid">'+items.map(x=>`<div class="album-card">${artBlock(x,'full')}<div class="album-card-body"><div class="album-title">${x.album}</div><div class="album-artist">${x.artist}</div><div class="album-footer"><span class="format-badge ${x.source==='Bandcamp'?'fmt-bc':'fmt-'+x.format.toLowerCase()}">${x.format}${x.source==='Bandcamp'?' · BC':''}</span><div class="stars-row">${starsHtml(x.rating,x.id)}</div></div>${x.notes?`<div style="font-size:10px;color:var(--muted2);margin-top:5px;font-style:italic;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${x.notes}</div>`:''}</div></div>`).join('')+'</div>';
+}
+function renderWishlist(items){
+  const pending=items.filter(x=>!x.bought),total=pending.reduce((s,x)=>s+x.price,0);
+  const bar=`<div class="budget-bar"><div><div class="budget-label">wishlist total</div><div class="budget-total">$${total.toFixed(2)}</div></div><div class="budget-divider"></div><div><div class="budget-label">pending</div><div style="font-size:16px;font-family:'Syne',sans-serif;font-weight:700">${pending.length} albums</div></div></div>`;
+  if(!items.length)return bar+'<div class="empty"><div class="empty-icon">🎵</div>wishlist empty</div>';
+  return bar+'<div class="wish-list">'+items.map(x=>`<div class="wish-row${x.bought?' bought':''}"><div class="priority-dot p-${x.priority}"></div>${artBlock(x,'small')}<div class="wish-info"><div class="wish-title">${x.album}</div><div class="wish-sub">${x.artist}${x.year?' · '+x.year:''}</div>${x.notes?`<div class="wish-note">${x.notes}</div>`:''}</div><div class="wish-meta">${x.genre?`<span class="genre-pill">${x.genre}</span>`:''}<span class="price-tag">$${x.price.toFixed(2)}</span>${x.bought?'<span class="owned-pill">✓ owned</span>':`<button class="buy-btn" onclick="markBought(${x.id})">i bought this</button>`}</div></div>`).join('')+'</div>';
+}
+function render(){
+  const q=document.getElementById('search').value.toLowerCase(),g=document.getElementById('genre-filter').value;
+  const lf=library.filter(x=>(!q||x.artist.toLowerCase().includes(q)||x.album.toLowerCase().includes(q))&&(!g||x.genre===g));
+  const wf=wishlist.filter(x=>(!q||x.artist.toLowerCase().includes(q)||x.album.toLowerCase().includes(q))&&(!g||x.genre===g));
+  document.getElementById('lib-count').textContent=library.length;
+  document.getElementById('wish-count').textContent=wishlist.filter(x=>!x.bought).length;
+  document.getElementById('stat-flac').textContent=library.filter(x=>x.format==='FLAC').length;
+  document.getElementById('stat-mp3').textContent=library.filter(x=>x.format==='MP3').length;
+  const rated=library.filter(x=>x.rating>0);
+  document.getElementById('stat-rating').textContent=rated.length?(rated.reduce((s,x)=>s+x.rating,0)/rated.length).toFixed(1):'—';
+  document.getElementById('content').innerHTML=tab==='library'?renderLibrary(lf):renderWishlist(wf);
+}
+function rate(id,n){const x=library.find(x=>x.id===id);if(x){x.rating=n;render();}}
+function markBought(id){
+  const x=wishlist.find(x=>x.id===id);if(!x)return;
+  x.bought=true;
+  library.push({id:library.length+1,artist:x.artist,album:x.album,year:x.year,genre:x.genre,format:'FLAC',source:'Bandcamp',rating:0,notes:'',artUrl:x.artUrl,mbId:null});
+  render();showToast('"'+x.album+'" moved to library');
+}
+
+// ── MODAL ────────────────────────────────────────────────
+function openAdd(){
+  selArt=null;selMbId=null;
+  document.getElementById('lib-fields').style.display=tab==='library'?'block':'none';
+  document.getElementById('wish-fields').style.display=tab==='wishlist'?'block':'none';
+  document.getElementById('modal-title').textContent=tab==='library'?'add to library':'add to wishlist';
+  document.getElementById('mb-results-wrap').style.display='none';
+  document.getElementById('mb-results').innerHTML='';
+  document.getElementById('art-preview').style.display='none';
+  document.getElementById('preview-img').src='';
+  ['f-artist','f-album','f-year','f-notes','f-wish-notes','f-price','mb-query'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
+  document.getElementById('f-genre').value='';
+  document.getElementById('add-modal').classList.add('open');
+  setTimeout(()=>document.getElementById('mb-query').focus(),100);
+}
+function openImport(){document.getElementById('import-modal').classList.add('open');}
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+function bgClose(e,id){if(e.target===document.getElementById(id))closeModal(id);}
+function saveItem(){
+  const artist=document.getElementById('f-artist').value.trim(),album=document.getElementById('f-album').value.trim();
+  if(!artist||!album){showToast('artist and album are required');return;}
+  const year=parseInt(document.getElementById('f-year').value)||new Date().getFullYear();
+  const genre=document.getElementById('f-genre').value||'';
+  if(tab==='library'){
+    library.push({id:library.length+1,artist,album,year,genre,format:document.getElementById('f-format').value,source:document.getElementById('f-source').value,rating:0,notes:document.getElementById('f-notes').value.trim(),artUrl:selArt,mbId:selMbId});
+    showToast('"'+album+'" added to library');
+  }else{
+    wishlist.push({id:wishlist.length+1,artist,album,year,genre,price:parseFloat(document.getElementById('f-price').value)||0,priority:document.getElementById('f-priority').value,notes:document.getElementById('f-wish-notes').value.trim(),bought:false,artUrl:selArt});
+    showToast('"'+album+'" added to wishlist');
+  }
+  closeModal('add-modal');render();
+}
+
+// ── BANDCAMP CSV ─────────────────────────────────────────
+function dragOver(e){e.preventDefault();document.getElementById('drop-zone').classList.add('drag-over');}
+function dragLeave(){document.getElementById('drop-zone').classList.remove('drag-over');}
+function dropFile(e){e.preventDefault();dragLeave();const f=e.dataTransfer.files[0];if(f)processCSV(f);}
+function handleFile(e){const f=e.target.files[0];if(f)processCSV(f);}
+function splitCSVLine(line){const cols=[];let cur='',inQ=false;for(const c of line){if(c==='"'){inQ=!inQ;}else if(c===','&&!inQ){cols.push(cur.trim());cur='';}else cur+=c;}cols.push(cur.trim());return cols;}
+function parseCSV(text){
+  const lines=text.split(/\r?\n/);if(!lines.length)return[];
+  const header=splitCSVLine(lines[0]).map(h=>h.toLowerCase().trim());
+  const rows=[];
+  for(let i=1;i<lines.length;i++){const line=lines[i].trim();if(!line)continue;const cols=splitCSVLine(line);const row={};header.forEach((h,i)=>row[h]=(cols[i]||'').replace(/^"|"$/g,''));rows.push(row);}
+  return rows;
+}
+async function processCSV(file){
+  const status=document.getElementById('import-status');
+  status.textContent='reading file...';
+  const text=await file.text();
+  const rows=parseCSV(text);
+  if(!rows.length){status.textContent='no data found in file';return;}
+  const keys=Object.keys(rows[0]);
+  const artistKey=keys.find(k=>k.includes('artist'))||keys[0];
+  const titleKey=keys.find(k=>k.includes('title')||k.includes('album'))||keys[1];
+  const dateKey=keys.find(k=>k.includes('release date')||k.includes('release_date'))||keys.find(k=>k.includes('date'));
+  const fmtKey=keys.find(k=>k.includes('format'));
+  let added=0,skipped=0;
+  for(const row of rows){
+    const artist=(row[artistKey]||'').trim(),album=(row[titleKey]||'').trim();
+    if(!artist&&!album){skipped++;continue;}
+    if(library.find(l=>l.artist.toLowerCase()===artist.toLowerCase()&&l.album.toLowerCase()===album.toLowerCase())){skipped++;continue;}
+    const dateStr=dateKey?row[dateKey]||'':'';
+    const year=dateStr?parseInt(dateStr.slice(0,4))||null:null;
+    const fmt=fmtKey?row[fmtKey]||'':'';
+    const format=fmt.toLowerCase().includes('flac')?'FLAC':'MP3';
+    library.push({id:library.length+1,artist,album,year,genre:'',format,source:'Bandcamp',rating:0,notes:'',artUrl:null,mbId:null});
+    added++;
+  }
   render();
+  showToast('imported '+added+' albums from bandcamp');
+  status.textContent='✓ '+added+' albums imported'+(skipped?' ('+skipped+' skipped)':'')+'. fetching art...';
+  await loadAllArt();
+  status.textContent='✓ done — '+added+' albums imported, art loaded';
 }
 
-function showToast(msg) {
-  const t = document.getElementById('toast');
-  document.getElementById('toast-msg').textContent = msg;
-  t.classList.add('show');
-  setTimeout(()=>t.classList.remove('show'), 2800);
-}
-
-document.addEventListener('keydown', e=>{ if(e.key==='Escape') closeModal(); });
-
+function showToast(msg){const t=document.getElementById('toast');document.getElementById('toast-msg').textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2800);}
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeModal('add-modal');closeModal('import-modal');}});
 render();
+setTimeout(loadAllArt,600);
 </script>
 </body>
 </html>
