@@ -453,7 +453,7 @@ function render(){
 }
 
 function getItem(id,lst){return(lst==='library'?library:wishlist).find(x=>x.id===id);}
-function quickRate(id,lst,n){const x=getItem(id,lst);if(x){x.rating=n;saveState();render();console.log("saved rating");}}
+function quickRate(id,lst,n){const x=getItem(id,lst);if(x){x.rating=n;saveState();render();}}
 function markBought(id){
   const x=wishlist.find(x=>x.id===id);if(!x)return;
   x.bought=true;
@@ -648,7 +648,7 @@ function saveState(){
       wishlist.forEach(item=>wishTx.objectStore('wishlist').add(item));
     }catch(e){}
   }
-  try{localStorage.setItem('crate-lib',JSON.stringify(library));localStorage.setItem('crate-wish',JSON.stringify(wishlist));}catch(e){}saveToFirebase();
+  saveToFirebase();
 }
 function loadState(){
   return new Promise(async(resolve)=>{await loadFromFirebase();
@@ -658,12 +658,12 @@ function loadState(){
         const libReq=libTx.objectStore('library').getAll();
         libReq.onsuccess=()=>{
           if(libReq.result.length>0)library=libReq.result;
-          else{const l=localStorage.getItem('crate-lib');if(l)library=JSON.parse(l);}
+          else{}
           const wishTx=db.transaction('wishlist','readonly');
           const wishReq=wishTx.objectStore('wishlist').getAll();
-          wishReq.onsuccess=()=>{if(wishReq.result.length>0)wishlist=wishReq.result;else{const w=localStorage.getItem('crate-wish');if(w)wishlist=JSON.parse(w);}resolve();};
+          wishReq.onsuccess=()=>{if(wishReq.result.length>0)wishlist=wishReq.result;else{}resolve();};
         };
-      }catch(e){const l=localStorage.getItem('crate-lib');const w=localStorage.getItem('crate-wish');if(l)library=JSON.parse(l);if(w)wishlist=JSON.parse(w);resolve();}
+      }catch(e){resolve();}
     }else{
       const l=localStorage.getItem('crate-lib');const w=localStorage.getItem('crate-wish');
       if(l)library=JSON.parse(l);if(w)wishlist=JSON.parse(w);
