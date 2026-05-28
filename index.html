@@ -624,7 +624,7 @@ function showToast(msg){const t=document.getElementById('toast');document.getEle
 // STORAGE - IndexedDB with localStorage fallback
 let db;
 function initDB(){
-  return new Promise((resolve)=>{
+  return new Promise(async(resolve)=>{await loadFromFirebase();
     try{
       const req=indexedDB.open('CRATE',1);
       req.onerror=()=>resolve();
@@ -648,10 +648,10 @@ function saveState(){
       wishlist.forEach(item=>wishTx.objectStore('wishlist').add(item));
     }catch(e){}
   }
-  try{localStorage.setItem('crate-lib',JSON.stringify(library));localStorage.setItem('crate-wish',JSON.stringify(wishlist));}catch(e){}
+  try{localStorage.setItem('crate-lib',JSON.stringify(library));localStorage.setItem('crate-wish',JSON.stringify(wishlist));}catch(e){}saveToFirebase();
 }
 function loadState(){
-  return new Promise((resolve)=>{
+  return new Promise(async(resolve)=>{await loadFromFirebase();
     if(db){
       try{
         const libTx=db.transaction('library','readonly');
@@ -674,5 +674,41 @@ function loadState(){
 document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeModal('add-modal');closeModal('edit-modal');closeModal('import-modal');}});
 render();
 </script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js"><\/script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-database.js"><\/script>
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyAOY5MOItgUxJtOr3iFwUbFKuVUEPxDU_g",
+  authDomain: "crate-29cb6.firebaseapp.com",
+  projectId: "crate-29cb6",
+  storageBucket: "crate-29cb6.firebasestorage.app",
+  messagingSenderId: "817427728833",
+  appId: "1:817427728833:web:bcc1386e3ca8e241530740"
+};
+firebase.initializeApp(firebaseConfig);
+const fbdb=firebase.database();
+let fbReady=false;
+fbdb.ref('.info/connected').on('value',snap=>{fbReady=snap.val();});
+
+function saveToFirebase(){
+  if(!fbReady)return;
+  const data={library,wishlist,updated:new Date().toISOString()};
+  fbdb.ref('collection').set(data).catch(e=>console.error('firebase save error',e));
+}
+
+function loadFromFirebase(){
+  return new Promise(resolve=>{
+    if(!fbReady){resolve();return;}
+    fbdb.ref('collection').once('value',snap=>{
+      if(snap.exists()){
+        const data=snap.val();
+        if(data.library)library=data.library;
+        if(data.wishlist)wishlist=data.wishlist;
+      }
+      resolve();
+    }).catch(e=>{console.error('firebase load error',e);resolve();});
+  });
+}
+<\/script>
 </body>
 </html>
