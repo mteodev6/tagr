@@ -203,4 +203,424 @@ select{background:var(--surface);border:1px solid var(--border);color:var(--text
     <div class="field">
       <label>search musicbrainz or paste release url / id</label>
       <div class="mb-search-wrap">
-        <input type="text" id="mb-query" placeholder="artist +
+        <input type="text" id="mb-query" placeholder="artist + album, or musicbrainz.org/release/..." onkeydown="if(event.key==='Enter')mbSearch()"/>
+        <button class="mb-search-btn" onclick="mbSearch()">search</button>
+      </div>
+    </div>
+    <div id="mb-results-wrap" style="display:none"><div class="mb-results" id="mb-results"></div></div>
+    <div class="mb-divider"><span>or fill in manually</span></div>
+    <div class="field-row">
+      <div class="field"><label>artist</label><input type="text" id="f-artist" placeholder="e.g. JPEGMAFIA"/></div>
+      <div class="field"><label>album</label><input type="text" id="f-album" placeholder="e.g. LP!"/></div>
+    </div>
+    <div class="field-row">
+      <div class="field"><label>year</label><input type="number" id="f-year" placeholder="2024"/></div>
+      <div class="field"><label>genre</label>
+        <select id="f-genre"><option value="">select...</option><option>hyperpop</option><option>digicore</option><option>electronic</option><option>hip-hop</option><option>experimental</option><option>ambient</option><option>noise</option></select>
+      </div>
+    </div>
+    <div id="lib-fields">
+      <div class="field-row">
+        <div class="field"><label>format</label><select id="f-format"><option>FLAC</option><option>MP3</option></select></div>
+        <div class="field"><label>source</label><select id="f-source"><option>Bandcamp</option><option>Soulseek</option><option>Other</option></select></div>
+      </div>
+      <div class="field"><label>bandcamp url (optional)</label><input type="text" id="f-bcurl" placeholder="https://artist.bandcamp.com/album/..."/></div>
+      <div class="field"><label>notes</label><textarea id="f-notes" placeholder="optional..."></textarea></div>
+    </div>
+    <div id="wish-fields" style="display:none">
+      <div class="field-row">
+        <div class="field"><label>price ($)</label><input type="number" id="f-price" placeholder="12" min="0" step="0.01"/></div>
+        <div class="field"><label>priority</label><select id="f-priority"><option value="high">high</option><option value="mid" selected>mid</option><option value="low">low</option></select></div>
+      </div>
+      <div class="field"><label>bandcamp url (optional)</label><input type="text" id="f-bcurl-wish" placeholder="https://artist.bandcamp.com/album/..."/></div>
+      <div class="field"><label>notes</label><textarea id="f-wish-notes" placeholder="e.g. wait for sale..."></textarea></div>
+    </div>
+    <div class="art-preview" id="art-preview">
+      <img id="preview-img" src="" alt=""/>
+      <span class="art-preview-label">cover art found</span>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('add-modal')">cancel</button>
+      <button class="btn btn-accent" onclick="saveAdd()">save</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="edit-modal" onclick="bgClose(event,'edit-modal')">
+  <div class="modal" style="width:480px">
+    <div class="modal-title" id="edit-title">edit</div>
+    <div class="edit-art-wrap">
+      <div class="edit-art-thumb" id="edit-thumb">&#x1F4BF;</div>
+      <div class="edit-art-side">
+        <div style="font-size:10px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px">rating</div>
+        <div class="edit-stars" id="edit-stars"></div>
+        <button class="btn" style="font-size:11px;padding:5px 10px;margin-top:8px;width:fit-content" onclick="retryArt()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.88"/></svg>
+          retry / fetch art
+        </button>
+        <div class="field" style="margin-top:6px;margin-bottom:0">
+          <input type="text" id="edit-art-url" placeholder="or paste image url directly..."/>
+        </div>
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field"><label>artist</label><input type="text" id="edit-artist"/></div>
+      <div class="field"><label>album</label><input type="text" id="edit-album"/></div>
+    </div>
+    <div class="field-row">
+      <div class="field"><label>year</label><input type="number" id="edit-year"/></div>
+      <div class="field"><label>genre</label>
+        <select id="edit-genre"><option value="">none</option><option>hyperpop</option><option>digicore</option><option>electronic</option><option>hip-hop</option><option>experimental</option><option>ambient</option><option>noise</option></select>
+      </div>
+    </div>
+    
+    <div class="field-row">
+      <div class="field"><label>price ($)</label><input type="number" id="edit-price" min="0" step="0.01"/></div>
+      <div class="field"><label>bandcamp url</label><input type="text" id="edit-bcurl" placeholder="https://artist.bandcamp.com/..."/></div>
+    </div>
+    <div class="field"><label>description / notes</label><textarea id="edit-notes" placeholder="details..."></textarea></div>
+
+    <div id="edit-lib-fields">
+      <div class="field-row">
+        <div class="field"><label>format</label><select id="edit-format"><option>FLAC</option><option>MP3</option></select></div>
+        <div class="field"><label>source</label><select id="edit-source"><option>Bandcamp</option><option>Soulseek</option><option>Other</option></select></div>
+      </div>
+    </div>
+    <div id="edit-wish-fields" style="display:none">
+      <div class="field-row">
+        <div class="field"><label>priority</label><select id="edit-priority"><option value="high">high</option><option value="mid">mid</option><option value="low">low</option></select></div>
+        <div class="field"></div>
+      </div>
+    </div>
+    <div class="del-confirm" id="del-confirm">
+      <p>Remove <strong id="del-name"></strong> from your collection? This cannot be undone.</p>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-ghost" onclick="document.getElementById('del-confirm').classList.remove('show')">cancel</button>
+        <button class="btn btn-danger" onclick="confirmDelete()">yes, remove</button>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-danger" onclick="showDel()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+        remove
+      </button>
+      <button class="btn btn-ghost" onclick="closeModal('edit-modal')">cancel</button>
+      <button class="btn btn-accent" onclick="saveEdit()">save changes</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="import-modal" onclick="bgClose(event,'import-modal')">
+  <div class="modal" style="width:470px">
+    <div class="modal-title">import from bandcamp</div>
+    <p style="font-size:12px;color:var(--muted);line-height:1.6">Bandcamp lets you export a CSV of everything you own:</p>
+    <div class="bc-steps">
+      <div class="bc-step"><div class="bc-step-num">1</div><div class="bc-step-text">Go to <a href="https://bandcamp.com/settings" target="_blank">bandcamp.com/settings</a> and scroll to <strong>Download your data</strong></div></div>
+      <div class="bc-step"><div class="bc-step-num">2</div><div class="bc-step-text">Click <strong>Request your data</strong> - Bandcamp emails you a download link</div></div>
+      <div class="bc-step"><div class="bc-step-num">3</div><div class="bc-step-text">Download the zip and find <strong>collection.csv</strong> inside</div></div>
+      <div class="bc-step"><div class="bc-step-num">4</div><div class="bc-step-text">Drop it below - CRATE imports everything and fetches art automatically</div></div>
+    </div>
+    <div class="drop-zone" id="drop-zone" onclick="document.getElementById('bc-file').click()" ondragover="dragOver(event)" ondragleave="dragLeave()" ondrop="dropFile(event)">
+      <div class="drop-zone-icon">&#x1F4C2;</div>
+      <div class="drop-zone-text"><strong>drop collection.csv here</strong><br>or click to browse</div>
+    </div>
+    <input type="file" id="bc-file" accept=".csv" style="display:none" onchange="handleFile(event)"/>
+    <div id="import-status" style="margin-top:12px;font-size:12px;color:var(--muted);text-align:center;min-height:18px;"></div>
+    <div class="modal-actions"><button class="btn btn-ghost" onclick="closeModal('import-modal')">close</button></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"><div class="toast-dot"></div><span id="toast-msg"></span></div>
+
+<script>
+let tab='library',selArt=null,selMbId=null;
+let editingId=null,editingList=null,editRating=0;
+let library=[],wishlist=[];
+
+const COLORS=['#1a2510','#10181a','#1a1018','#181510','#101820','#1a1010','#121a10'];
+const EMOJIS=['\u{1F3B5}','\u{1F4BF}','\u{1F300}','\u26A1','\u{1F5A4}','\u{1F50A}','\u{1F3A7}','\u{1F49C}','\u{1F9E8}','\u{1F319}'];
+function hash(s){let h=5381;for(let i=0;i<s.length;i++)h=((h<<5)+h)+s.charCodeAt(i);return Math.abs(h);}
+function bg(s){return COLORS[hash(s)%COLORS.length];}
+function em(s){return EMOJIS[hash(s)%EMOJIS.length];}
+
+const artCache={};
+function imgExists(url){return new Promise(res=>{const i=new Image();i.onload=()=>res(true);i.onerror=()=>res(false);i.src=url;});}
+async function itunesArt(artist,album){
+  try{const q=encodeURIComponent(artist+' '+album);const r=await fetch('https://itunes.apple.com/search?term='+q+'&entity=album&limit=3');const d=await r.json();if(d.results&&d.results.length)return d.results[0].artworkUrl100.replace('100x100bb','600x600bb');}catch(e){}return null;
+}
+async function getArt(artist,album,mbId){
+  const key=mbId||artist+'::'+album;
+  if(artCache[key]!==undefined)return artCache[key];
+  artCache[key]=null;
+  if(mbId){const url='https://coverartarchive.org/release/'+mbId+'/front-250';if(await imgExists(url)){artCache[key]=url;return url;}}
+  try{
+    const q=encodeURIComponent('artist:"'+artist+'" release:"'+album+'"');
+    const r=await fetch('https://musicbrainz.org/ws/2/release/?query='+q+'&limit=3&fmt=json',{headers:{'User-Agent':'CRATE/1.0'}});
+    const d=await r.json();
+    if(d.releases&&d.releases.length){for(const rel of d.releases){const url='https://coverartarchive.org/release/'+rel.id+'/front-250';if(await imgExists(url)){artCache[key]=url;return url;}}}
+  }catch(e){}
+  const it=await itunesArt(artist,album);artCache[key]=it;return it;
+}
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+async function loadAllArt(){
+  for(const item of [...library,...wishlist]){
+    if(item.artUrl)continue;
+    const url=await getArt(item.artist,item.album,item.mbId||null);
+    if(url){item.artUrl=url;render();}
+    await sleep(150);
+  }
+}
+
+function artistStr(rel){if(!rel['artist-credit'])return '';return rel['artist-credit'].map(a=>typeof a==='string'?a:(a.artist?.name||'')).join('');}
+async function mbSearch(){
+  const q=document.getElementById('mb-query').value.trim();if(!q)return;
+  const wrap=document.getElementById('mb-results-wrap'),el=document.getElementById('mb-results');
+  wrap.style.display='block';el.innerHTML='<div class="mb-loading">searching...</div>';
+  const m=q.match(/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})/i);
+  if(m){await mbById(m[1]);return;}
+  try{
+    const r=await fetch('https://musicbrainz.org/ws/2/release/?query='+encodeURIComponent(q)+'&limit=10&fmt=json',{headers:{'User-Agent':'CRATE/1.0'}});
+    const d=await r.json();
+    if(!d.releases||!d.releases.length){el.innerHTML='<div class="mb-loading">no results</div>';return;}
+    const seen=new Set();
+    const list=d.releases.filter(r=>{const k=artistStr(r)+'::'+r.title;if(seen.has(k))return false;seen.add(k);return true;}).slice(0,6);
+    showMbResults(list.map(r=>({id:r.id,title:r.title,artist:artistStr(r),date:r.date||''})));
+  }catch(e){el.innerHTML='<div class="mb-loading">search failed</div>';}
+}
+async function mbById(id){
+  const el=document.getElementById('mb-results');
+  try{const r=await fetch('https://musicbrainz.org/ws/2/release/'+id+'?inc=artist-credits&fmt=json',{headers:{'User-Agent':'CRATE/1.0'}});const d=await r.json();showMbResults([{id:d.id,title:d.title,artist:artistStr(d),date:d.date||''}]);}
+  catch(e){el.innerHTML='<div class="mb-loading">could not fetch</div>';}
+}
+function showMbResults(results){
+  const el=document.getElementById('mb-results');
+  el.innerHTML=results.map(r=>'<div class="mb-result" id="mbr-'+r.id+'" onclick="selectMb(\''+r.id+'\',\''+esc(r.title)+'\',\''+esc(r.artist)+'\',\''+r.date+'\')"><div class="mb-result-art" id="mbra-'+r.id+'">&#x1F4BF;</div><div class="mb-result-info"><div class="mb-result-title">'+r.title+'</div><div class="mb-result-sub">'+r.artist+(r.date?' &middot; '+r.date.slice(0,4):'')+'</div></div></div>').join('');
+  results.forEach(async r=>{
+    const el=document.getElementById('mbra-'+r.id);if(!el)return;
+    const caa='https://coverartarchive.org/release/'+r.id+'/front-250';
+    if(await imgExists(caa)){if(el)el.innerHTML='<img src="'+caa+'"/>';return;}
+    const it=await itunesArt(r.artist,r.title);if(it&&el)el.innerHTML='<img src="'+it+'"/>';
+  });
+}
+async function selectMb(id,title,artist,date){
+  document.querySelectorAll('.mb-result').forEach(e=>e.classList.remove('selected'));
+  document.getElementById('mbr-'+id)?.classList.add('selected');
+  selMbId=id;
+  document.getElementById('f-artist').value=artist;
+  document.getElementById('f-album').value=title;
+  const yr=date?parseInt(date.slice(0,4)):null;if(yr)document.getElementById('f-year').value=yr;
+  const preview=document.getElementById('art-preview'),img=document.getElementById('preview-img');
+  const caa='https://coverartarchive.org/release/'+id+'/front-250';
+  if(await imgExists(caa)){img.src=caa;selArt=caa;preview.style.display='flex';}
+  else{const it=await itunesArt(artist,title);if(it){img.src=it;selArt=it;preview.style.display='flex';}}
+}
+function esc(s){return(s||'').replace(/\\/g,'\\\\').replace(/'/g,"\\\'");}
+
+function openBandcamp(item){
+  if(item&&item.bcUrl)window.open(item.bcUrl,'_blank');
+  else if(item)window.open('https://bandcamp.com/search?q='+encodeURIComponent(item.artist+' '+item.album),'_blank');
+}
+
+function setTab(t){tab=t;document.getElementById('nav-library').classList.toggle('active',t==='library');document.getElementById('nav-wishlist').classList.toggle('active',t==='wishlist');render();}
+function starsHtml(rating,id,lst){return Array.from({length:5},(_,i)=>'<span class="star'+(i<rating?' on':'')+'" onclick="event.stopPropagation();quickRate('+id+',\''+lst+'\','+(i+1)+')">&#9733;</span>').join('');}
+
+function renderLibrary(items){
+  if(!items.length)return'<div class="empty"><div class="empty-icon">&#x1F4BF;</div>your library is empty<div class="empty-hint">add albums manually or import your bandcamp collection</div></div>';
+  return'<div class="grid">'+items.map(x=>'<div class="album-card" onclick="openBandcamp(getItem('+x.id+',\'library\'))" title="open on bandcamp"><div class="album-art" style="background:'+bg(x.album)+'">'+(x.artUrl?'<img src="'+x.artUrl+'" onerror="this.style.display=\'none\'"/>' :'')+'<div class="album-art-overlay"></div><span class="album-art-emoji">'+em(x.artist)+'</span></div><div class="card-actions" onclick="event.stopPropagation()"><div class="card-action-btn" title="edit" onclick="openEdit('+x.id+',\'library\')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></div></div><div class="album-card-body"><div class="album-title">'+x.album+'</div><div class="album-artist">'+x.artist+'</div><div class="album-footer"><span class="format-badge '+(x.source==='Bandcamp'?'fmt-bc':'fmt-'+x.format.toLowerCase())+'">'+x.format+(x.source==='Bandcamp'?' &middot; BC':'')+'</span><div class="stars-row" onclick="event.stopPropagation()">'+starsHtml(x.rating,x.id,'library')+'</div></div>'+(x.notes?'<div style="font-size:10px;color:var(--muted2);margin-top:5px;font-style:italic;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+x.notes+'</div>':'')+'</div></div>').join('')+'</div>';
+}
+
+function renderWishlist(items){
+  const pending=items.filter(x=>!x.bought),total=pending.reduce((s,x)=>s+(x.price||0),0);
+  const bar='<div class="budget-bar"><div><div class="budget-label">wishlist total</div><div class="budget-total">$'+total.toFixed(2)+'</div></div><div class="budget-divider"></div><div><div class="budget-label">pending</div><div style="font-size:16px;font-family:\'Syne\',sans-serif;font-weight:700">'+pending.length+' albums</div></div></div>';
+  if(!items.length)return bar+'<div class="empty"><div class="empty-icon">&#x1F3B5;</div>wishlist is empty<div class="empty-hint">add albums you want to buy</div></div>';
+  return bar+'<div class="wish-list">'+items.map(x=>'<div class="wish-row'+(x.bought?' bought':'')+'" onclick="openBandcamp(getItem('+x.id+',\'wishlist\'))" title="open on bandcamp"><div class="priority-dot p-'+x.priority+'"></div><div class="wish-art" style="background:'+bg(x.album)+'">'+(x.artUrl?'<img src="'+x.artUrl+'" onerror="this.style.display=\'none\'"/>' :'')+'<span class="wish-art-emoji">'+em(x.artist)+'</span></div><div class="wish-info"><div class="wish-title">'+x.album+'</div><div class="wish-sub">'+x.artist+(x.year?' &middot; '+x.year:'')+'</div>'+(x.notes?'<div class="wish-note">'+x.notes+'</div>':'')+'</div><div class="wish-meta" onclick="event.stopPropagation()">'+(x.genre?'<span class="genre-pill">'+x.genre+'</span>':'')+'<span class="price-tag">$'+(x.price||0).toFixed(2)+'</span>'+(x.bought?'<span class="owned-pill">&#10003; owned</span>':'<button class="buy-btn" onclick="markBought('+x.id+')">i bought this</button>')+'<div class="icon-btn" title="edit" onclick="openEdit('+x.id+',\'wishlist\')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></div></div></div>').join('')+'</div>';
+}
+
+function render(){
+  const q=document.getElementById('search').value.toLowerCase(),g=document.getElementById('genre-filter').value;
+  const lf=library.filter(x=>(!q||x.artist.toLowerCase().includes(q)||x.album.toLowerCase().includes(q))&&(!g||x.genre===g));
+  const wf=wishlist.filter(x=>(!q||x.artist.toLowerCase().includes(q)||x.album.toLowerCase().includes(q))&&(!g||x.genre===g));
+  document.getElementById('lib-count').textContent=library.length;
+  document.getElementById('wish-count').textContent=wishlist.filter(x=>!x.bought).length;
+  document.getElementById('stat-flac').textContent=library.filter(x=>x.format==='FLAC').length;
+  document.getElementById('stat-mp3').textContent=library.filter(x=>x.format==='MP3').length;
+  const rated=library.filter(x=>x.rating>0);
+  document.getElementById('stat-rating').textContent=rated.length?(rated.reduce((s,x)=>s+x.rating,0)/rated.length).toFixed(1):'--';
+  document.getElementById('content').innerHTML=tab==='library'?renderLibrary(lf):renderWishlist(wf);
+}
+
+function getItem(id,lst){return(lst==='library'?library:wishlist).find(x=>x.id===id);}
+function quickRate(id,lst,n){const x=getItem(id,lst);if(x){x.rating=n;render();}}
+function markBought(id){
+  const x=wishlist.find(x=>x.id===id);if(!x)return;
+  x.bought=true;
+  library.push({id:Date.now(),artist:x.artist,album:x.album,year:x.year,genre:x.genre,format:'FLAC',source:'Bandcamp',rating:x.rating||0,notes:x.notes||'',price:x.price||0,artUrl:x.artUrl,mbId:null,bcUrl:x.bcUrl||null});
+  render();showToast('"'+x.album+'" moved to library');
+}
+
+function openAdd(){
+  selArt=null;selMbId=null;
+  document.getElementById('lib-fields').style.display=tab==='library'?'block':'none';
+  document.getElementById('wish-fields').style.display=tab==='wishlist'?'block':'none';
+  document.getElementById('add-modal-title').textContent=tab==='library'?'add to library':'add to wishlist';
+  document.getElementById('mb-results-wrap').style.display='none';
+  document.getElementById('mb-results').innerHTML='';
+  document.getElementById('art-preview').style.display='none';
+  document.getElementById('preview-img').src='';
+  ['f-artist','f-album','f-year','f-notes','f-wish-notes','f-price','mb-query','f-bcurl','f-bcurl-wish'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
+  document.getElementById('f-genre').value='';
+  document.getElementById('add-modal').classList.add('open');
+  setTimeout(()=>document.getElementById('mb-query').focus(),100);
+}
+
+function saveAdd(){
+  const artist=document.getElementById('f-artist').value.trim(),album=document.getElementById('f-album').value.trim();
+  if(!artist||!album){showToast('artist and album are required');return;}
+  const year=parseInt(document.getElementById('f-year').value)||new Date().getFullYear();
+  const genre=document.getElementById('f-genre').value||'';
+  if(tab==='library'){
+    library.push({id:Date.now(),artist,album,year,genre,format:document.getElementById('f-format').value,source:document.getElementById('f-source').value,rating:0,notes:document.getElementById('f-notes').value.trim(),price:0,artUrl:selArt,mbId:selMbId,bcUrl:document.getElementById('f-bcurl').value.trim()||null});
+    showToast('"'+album+'" added to library');
+  }else{
+    wishlist.push({id:Date.now(),artist,album,year,genre,price:parseFloat(document.getElementById('f-price').value)||0,rating:0,priority:document.getElementById('f-priority').value,notes:document.getElementById('f-wish-notes').value.trim(),bought:false,artUrl:selArt,bcUrl:document.getElementById('f-bcurl-wish').value.trim()||null});
+    showToast('"'+album+'" added to wishlist');
+  }
+  closeModal('add-modal');render();
+}
+
+function renderEditStars(){
+  document.getElementById('edit-stars').innerHTML=Array.from({length:5},(_,i)=>'<span class="edit-star'+(i<editRating?' on':'')+'" onclick="setEditRating('+(i+1)+')">&#9733;</span>').join('');
+}
+function setEditRating(n){editRating=n;renderEditStars();}
+
+function openEdit(id,lst){
+  const item=getItem(id,lst);if(!item)return;
+  editingId=id;editingList=lst;editRating=item.rating||0;
+  document.getElementById('del-confirm').classList.remove('show');
+  document.getElementById('edit-title').textContent='edit \u00B7 '+item.album;
+  const thumb=document.getElementById('edit-thumb');
+  if(item.artUrl){thumb.innerHTML='<img src="'+item.artUrl+'" onerror="this.parentElement.textContent=\'&#x1F4BF;\'">';}
+  else{thumb.textContent=em(item.artist);}
+  document.getElementById('edit-art-url').value=item.artUrl||'';
+  renderEditStars();
+  document.getElementById('edit-artist').value=item.artist;
+  document.getElementById('edit-album').value=item.album;
+  document.getElementById('edit-year').value=item.year||'';
+  document.getElementById('edit-genre').value=item.genre||'';
+  
+  document.getElementById('edit-price').value=item.price||0;
+  document.getElementById('edit-bcurl').value=item.bcUrl||'';
+  document.getElementById('edit-notes').value=item.notes||'';
+
+  if(lst==='library'){
+    document.getElementById('edit-lib-fields').style.display='block';
+    document.getElementById('edit-wish-fields').style.display='none';
+    document.getElementById('edit-format').value=item.format||'FLAC';
+    document.getElementById('edit-source').value=item.source||'Bandcamp';
+  }else{
+    document.getElementById('edit-lib-fields').style.display='none';
+    document.getElementById('edit-wish-fields').style.display='block';
+    document.getElementById('edit-priority').value=item.priority||'mid';
+  }
+  document.getElementById('edit-modal').classList.add('open');
+}
+
+async function retryArt(){
+  const item=getItem(editingId,editingList);if(!item)return;
+  const key=item.mbId||item.artist+'::'+item.album;
+  delete artCache[key];showToast('fetching art...');
+  const url=await getArt(item.artist,item.album,item.mbId||null);
+  if(url){
+    item.artUrl=url;
+    document.getElementById('edit-thumb').innerHTML='<img src="'+url+'" onerror="this.parentElement.textContent=\'&#x1F4BF;\'">';
+    document.getElementById('edit-art-url').value=url;
+    render();showToast('art loaded');
+  }else showToast('no art found - try pasting a url');
+}
+
+function saveEdit(){
+  const item=getItem(editingId,editingList);if(!item)return;
+  item.artist=document.getElementById('edit-artist').value.trim()||item.artist;
+  item.album=document.getElementById('edit-album').value.trim()||item.album;
+  item.year=parseInt(document.getElementById('edit-year').value)||item.year;
+  item.genre=document.getElementById('edit-genre').value||'';
+  item.rating=editRating;
+  item.price=parseFloat(document.getElementById('edit-price').value)||0;
+  item.bcUrl=document.getElementById('edit-bcurl').value.trim()||null;
+  item.notes=document.getElementById('edit-notes').value.trim();
+  
+  const manualUrl=document.getElementById('edit-art-url').value.trim();
+  item.artUrl=manualUrl||null;
+
+  if(editingList==='library'){
+    item.format=document.getElementById('edit-format').value;
+    item.source=document.getElementById('edit-source').value;
+  }else{
+    item.priority=document.getElementById('edit-priority').value;
+  }
+  closeModal('edit-modal');render();showToast('"'+item.album+'" updated');
+}
+
+function showDel(){
+  const item=getItem(editingId,editingList);
+  document.getElementById('del-name').textContent=item?'"'+item.album+'"':'this';
+  document.getElementById('del-confirm').classList.add('show');
+}
+function confirmDelete(){
+  if(editingList==='library')library=library.filter(x=>x.id!==editingId);
+  else wishlist=wishlist.filter(x=>x.id!==editingId);
+  closeModal('edit-modal');render();showToast('removed');
+}
+
+function openImport(){document.getElementById('import-modal').classList.add('open');}
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+function bgClose(e,id){if(e.target===document.getElementById(id))closeModal(id);}
+
+function dragOver(e){e.preventDefault();document.getElementById('drop-zone').classList.add('drag-over');}
+function dragLeave(){document.getElementById('drop-zone').classList.remove('drag-over');}
+function dropFile(e){e.preventDefault();dragLeave();const f=e.dataTransfer.files[0];if(f)processCSV(f);}
+function handleFile(e){const f=e.target.files[0];if(f)processCSV(f);}
+function splitCSV(line){const cols=[];let cur='',inQ=false;for(const c of line){if(c==='"'){inQ=!inQ;}else if(c===','&&!inQ){cols.push(cur.trim());cur='';}else cur+=c;}cols.push(cur.trim());return cols;}
+function parseCSV(text){
+  const lines=text.split(/\r?\n/);if(!lines.length)return[];
+  const header=splitCSV(lines[0]).map(h=>h.toLowerCase().trim());
+  const rows=[];
+  for(let i=1;i<lines.length;i++){const l=lines[i].trim();if(!l)continue;const cols=splitCSV(l);const row={};header.forEach((h,i)=>row[h]=(cols[i]||'').replace(/^"|"$/g,''));rows.push(row);}
+  return rows;
+}
+async function processCSV(file){
+  const status=document.getElementById('import-status');
+  status.textContent='reading file...';
+  const text=await file.text();
+  const rows=parseCSV(text);
+  if(!rows.length){status.textContent='no data found in file';return;}
+  const keys=Object.keys(rows[0]);
+  const aKey=keys.find(k=>k.includes('artist'))||keys[0];
+  const tKey=keys.find(k=>k.includes('title')||k.includes('album'))||keys[1];
+  const dKey=keys.find(k=>k.includes('release date')||k.includes('release_date'))||keys.find(k=>k.includes('date'));
+  const fKey=keys.find(k=>k.includes('format'));
+  const uKey=keys.find(k=>k.includes('url')||k.includes('link'));
+  let added=0,skipped=0;
+  for(const row of rows){
+    const artist=(row[aKey]||'').trim(),album=(row[tKey]||'').trim();
+    if(!artist&&!album){skipped++;continue;}
+    if(library.find(l=>l.artist.toLowerCase()===artist.toLowerCase()&&l.album.toLowerCase()===album.toLowerCase())){skipped++;continue;}
+    const dateStr=dKey?row[dKey]||'':'';
+    const year=dateStr?parseInt(dateStr.slice(0,4))||null:null;
+    const fmt=fKey?row[fKey]||'':'';
+    library.push({id:Date.now()+added,artist,album,year,genre:'',format:fmt.toLowerCase().includes('flac')?'FLAC':'MP3',source:'Bandcamp',rating:0,price:0,notes:'',artUrl:null,mbId:null,bcUrl:uKey?row[uKey]||null:null});
+    added++;
+  }
+  render();
+  showToast('imported '+added+' albums');
+  status.textContent='imported '+added+(skipped?' ('+skipped+' skipped)':'')+'. fetching art...';
+  await loadAllArt();
+  status.textContent='done - '+added+' albums imported';
+}
+
+function showToast(msg){const t=document.getElementById('toast');document.getElementById('toast-msg').textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2800);}
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeModal('add-modal');closeModal('edit-modal');closeModal('import-modal');}});
+render();
+</script>
+</body>
+</html>
