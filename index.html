@@ -44,14 +44,14 @@ select{background:var(--surface);border:1px solid var(--border);color:var(--text
 .btn svg{width:13px;height:13px;}
 .content{flex:1;overflow-y:auto;padding:22px 26px;}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(175px,1fr));gap:12px;}
-.album-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;overflow:hidden;transition:border-color .15s,transform .15s;position:relative;cursor:pointer;}
+.album-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;overflow:hidden;transition:border-color .15s,transform .15s;position:relative;}
 .album-card:hover{border-color:var(--border2);transform:translateY(-2px);}
-.album-art{width:100%;aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:38px;position:relative;background:var(--surface2);overflow:hidden;}
+.album-art{width:100%;aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:38px;position:relative;background:var(--surface2);overflow:hidden;cursor:pointer;}
 .album-art img{width:100%;height:100%;object-fit:cover;position:absolute;inset:0;}
 .album-art-overlay{position:absolute;inset:0;background:linear-gradient(to bottom,transparent 50%,rgba(0,0,0,.6));}
 .album-art-emoji{position:relative;z-index:1;}
 .album-card-body{padding:10px 12px;}
-.album-title{font-family:'Syne',sans-serif;font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;transition:color .15s;}
+.album-title{font-family:'Syne',sans-serif;font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer;transition:color .15s;}
 .album-title:hover{color:var(--accent);}
 .album-artist{font-size:11px;color:var(--muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .album-footer{display:flex;align-items:center;justify-content:space-between;margin-top:8px;}
@@ -71,15 +71,15 @@ select{background:var(--surface);border:1px solid var(--border);color:var(--text
 .budget-total{font-family:'Syne',sans-serif;font-size:20px;font-weight:700;color:var(--accent);}
 .budget-divider{width:1px;height:32px;background:var(--border);}
 .wish-list{display:flex;flex-direction:column;gap:6px;}
-.wish-row{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:10px 14px;display:flex;align-items:center;gap:12px;transition:border-color .15s;cursor:pointer;}
+.wish-row{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:10px 14px;display:flex;align-items:center;gap:12px;transition:border-color .15s;}
 .wish-row:hover{border-color:var(--border2);}.wish-row.bought{opacity:.4;}
 .priority-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
 .p-high{background:var(--red);box-shadow:0 0 6px rgba(255,95,95,.4);}
 .p-mid{background:var(--amber);}.p-low{background:var(--muted2);}
-.wish-art{width:40px;height:40px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;background:var(--surface2);overflow:hidden;position:relative;}
+.wish-art{width:40px;height:40px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;background:var(--surface2);overflow:hidden;position:relative;cursor:pointer;}
 .wish-art img{width:100%;height:100%;object-fit:cover;position:absolute;inset:0;}
 .wish-art-emoji{position:relative;z-index:1;}
-.wish-info{flex:1;min-width:0;}
+.wish-info{flex:1;min-width:0;cursor:pointer;}
 .wish-title{font-family:'Syne',sans-serif;font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;transition:color .15s;}
 .wish-info:hover .wish-title{color:var(--accent);}
 .wish-sub{font-size:11px;color:var(--muted);margin-top:2px;}
@@ -197,6 +197,7 @@ select{background:var(--surface);border:1px solid var(--border);color:var(--text
   </main>
 </div>
 
+<!-- ADD MODAL -->
 <div class="modal-backdrop" id="add-modal" onclick="bgClose(event,'add-modal')">
   <div class="modal">
     <div class="modal-title" id="add-modal-title">add to library</div>
@@ -233,7 +234,7 @@ select{background:var(--surface);border:1px solid var(--border);color:var(--text
         <div class="field"><label>priority</label><select id="f-priority"><option value="high">high</option><option value="mid" selected>mid</option><option value="low">low</option></select></div>
       </div>
       <div class="field"><label>bandcamp url (optional)</label><input type="text" id="f-bcurl-wish" placeholder="https://artist.bandcamp.com/album/..."/></div>
-      <div class="field"><label>notes</label><textarea id="f-wish-notes" placeholder="e.g. wait for sale..."></textarea></div>
+      <div class="field"><label>notes</label><input type="text" id="f-wish-notes" placeholder="e.g. wait for sale..."/></div>
     </div>
     <div class="art-preview" id="art-preview">
       <img id="preview-img" src="" alt=""/>
@@ -246,6 +247,7 @@ select{background:var(--surface);border:1px solid var(--border);color:var(--text
   </div>
 </div>
 
+<!-- EDIT MODAL -->
 <div class="modal-backdrop" id="edit-modal" onclick="bgClose(event,'edit-modal')">
   <div class="modal" style="width:480px">
     <div class="modal-title" id="edit-title">edit</div>
@@ -256,7 +258,7 @@ select{background:var(--surface);border:1px solid var(--border);color:var(--text
         <div class="edit-stars" id="edit-stars"></div>
         <button class="btn" style="font-size:11px;padding:5px 10px;margin-top:8px;width:fit-content" onclick="retryArt()">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.88"/></svg>
-          retry / fetch art
+          retry art
         </button>
         <div class="field" style="margin-top:6px;margin-bottom:0">
           <input type="text" id="edit-art-url" placeholder="or paste image url directly..."/>
@@ -273,24 +275,21 @@ select{background:var(--surface);border:1px solid var(--border);color:var(--text
         <select id="edit-genre"><option value="">none</option><option>hyperpop</option><option>digicore</option><option>electronic</option><option>hip-hop</option><option>experimental</option><option>ambient</option><option>noise</option></select>
       </div>
     </div>
-    
-    <div class="field-row">
-      <div class="field"><label>price ($)</label><input type="number" id="edit-price" min="0" step="0.01"/></div>
-      <div class="field"><label>bandcamp url</label><input type="text" id="edit-bcurl" placeholder="https://artist.bandcamp.com/..."/></div>
-    </div>
-    <div class="field"><label>description / notes</label><textarea id="edit-notes" placeholder="details..."></textarea></div>
-
     <div id="edit-lib-fields">
       <div class="field-row">
         <div class="field"><label>format</label><select id="edit-format"><option>FLAC</option><option>MP3</option></select></div>
         <div class="field"><label>source</label><select id="edit-source"><option>Bandcamp</option><option>Soulseek</option><option>Other</option></select></div>
       </div>
+      <div class="field"><label>bandcamp url</label><input type="text" id="edit-bcurl" placeholder="https://artist.bandcamp.com/album/..."/></div>
+      <div class="field"><label>notes</label><textarea id="edit-notes"></textarea></div>
     </div>
     <div id="edit-wish-fields" style="display:none">
       <div class="field-row">
+        <div class="field"><label>price ($)</label><input type="number" id="edit-price" min="0" step="0.01"/></div>
         <div class="field"><label>priority</label><select id="edit-priority"><option value="high">high</option><option value="mid">mid</option><option value="low">low</option></select></div>
-        <div class="field"></div>
       </div>
+      <div class="field"><label>bandcamp url</label><input type="text" id="edit-bcurl-wish" placeholder="https://artist.bandcamp.com/album/..."/></div>
+      <div class="field"><label>notes</label><input type="text" id="edit-wish-notes"/></div>
     </div>
     <div class="del-confirm" id="del-confirm">
       <p>Remove <strong id="del-name"></strong> from your collection? This cannot be undone.</p>
@@ -310,6 +309,7 @@ select{background:var(--surface);border:1px solid var(--border);color:var(--text
   </div>
 </div>
 
+<!-- IMPORT MODAL -->
 <div class="modal-backdrop" id="import-modal" onclick="bgClose(event,'import-modal')">
   <div class="modal" style="width:470px">
     <div class="modal-title">import from bandcamp</div>
@@ -426,14 +426,14 @@ function starsHtml(rating,id,lst){return Array.from({length:5},(_,i)=>'<span cla
 
 function renderLibrary(items){
   if(!items.length)return'<div class="empty"><div class="empty-icon">&#x1F4BF;</div>your library is empty<div class="empty-hint">add albums manually or import your bandcamp collection</div></div>';
-  return'<div class="grid">'+items.map(x=>'<div class="album-card" onclick="openBandcamp(getItem('+x.id+',\'library\'))" title="open on bandcamp"><div class="album-art" style="background:'+bg(x.album)+'">'+(x.artUrl?'<img src="'+x.artUrl+'" onerror="this.style.display=\'none\'"/>' :'')+'<div class="album-art-overlay"></div><span class="album-art-emoji">'+em(x.artist)+'</span></div><div class="card-actions" onclick="event.stopPropagation()"><div class="card-action-btn" title="edit" onclick="openEdit('+x.id+',\'library\')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></div></div><div class="album-card-body"><div class="album-title">'+x.album+'</div><div class="album-artist">'+x.artist+'</div><div class="album-footer"><span class="format-badge '+(x.source==='Bandcamp'?'fmt-bc':'fmt-'+x.format.toLowerCase())+'">'+x.format+(x.source==='Bandcamp'?' &middot; BC':'')+'</span><div class="stars-row" onclick="event.stopPropagation()">'+starsHtml(x.rating,x.id,'library')+'</div></div>'+(x.notes?'<div style="font-size:10px;color:var(--muted2);margin-top:5px;font-style:italic;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+x.notes+'</div>':'')+'</div></div>').join('')+'</div>';
+  return'<div class="grid">'+items.map(x=>'<div class="album-card"><div class="album-art" style="background:'+bg(x.album)+'" onclick="openBandcamp(getItem('+x.id+',\'library\'))" title="open on bandcamp">'+(x.artUrl?'<img src="'+x.artUrl+'" onerror="this.style.display=\'none\'"/>' :'')+'<div class="album-art-overlay"></div><span class="album-art-emoji">'+em(x.artist)+'</span></div><div class="card-actions"><div class="card-action-btn" title="edit" onclick="openEdit('+x.id+',\'library\')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></div><div class="card-action-btn" title="open on bandcamp" onclick="openBandcamp(getItem('+x.id+',\'library\'))" style="color:#1da0c3"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg></div></div><div class="album-card-body"><div class="album-title" onclick="openBandcamp(getItem('+x.id+',\'library\'))" title="open on bandcamp">'+x.album+'</div><div class="album-artist">'+x.artist+'</div><div class="album-footer"><span class="format-badge '+(x.source==='Bandcamp'?'fmt-bc':'fmt-'+x.format.toLowerCase())+'">'+x.format+(x.source==='Bandcamp'?' &middot; BC':'')+'</span><div class="stars-row">'+starsHtml(x.rating,x.id,'library')+'</div></div>'+(x.notes?'<div style="font-size:10px;color:var(--muted2);margin-top:5px;font-style:italic;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+x.notes+'</div>':'')+'</div></div>').join('')+'</div>';
 }
 
 function renderWishlist(items){
-  const pending=items.filter(x=>!x.bought),total=pending.reduce((s,x)=>s+(x.price||0),0);
+  const pending=items.filter(x=>!x.bought),total=pending.reduce((s,x)=>s+x.price,0);
   const bar='<div class="budget-bar"><div><div class="budget-label">wishlist total</div><div class="budget-total">$'+total.toFixed(2)+'</div></div><div class="budget-divider"></div><div><div class="budget-label">pending</div><div style="font-size:16px;font-family:\'Syne\',sans-serif;font-weight:700">'+pending.length+' albums</div></div></div>';
   if(!items.length)return bar+'<div class="empty"><div class="empty-icon">&#x1F3B5;</div>wishlist is empty<div class="empty-hint">add albums you want to buy</div></div>';
-  return bar+'<div class="wish-list">'+items.map(x=>'<div class="wish-row'+(x.bought?' bought':'')+'" onclick="openBandcamp(getItem('+x.id+',\'wishlist\'))" title="open on bandcamp"><div class="priority-dot p-'+x.priority+'"></div><div class="wish-art" style="background:'+bg(x.album)+'">'+(x.artUrl?'<img src="'+x.artUrl+'" onerror="this.style.display=\'none\'"/>' :'')+'<span class="wish-art-emoji">'+em(x.artist)+'</span></div><div class="wish-info"><div class="wish-title">'+x.album+'</div><div class="wish-sub">'+x.artist+(x.year?' &middot; '+x.year:'')+'</div>'+(x.notes?'<div class="wish-note">'+x.notes+'</div>':'')+'</div><div class="wish-meta" onclick="event.stopPropagation()">'+(x.genre?'<span class="genre-pill">'+x.genre+'</span>':'')+'<span class="price-tag">$'+(x.price||0).toFixed(2)+'</span>'+(x.bought?'<span class="owned-pill">&#10003; owned</span>':'<button class="buy-btn" onclick="markBought('+x.id+')">i bought this</button>')+'<div class="icon-btn" title="edit" onclick="openEdit('+x.id+',\'wishlist\')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></div></div></div>').join('')+'</div>';
+  return bar+'<div class="wish-list">'+items.map(x=>'<div class="wish-row'+(x.bought?' bought':'')+'"><div class="priority-dot p-'+x.priority+'"></div><div class="wish-art" style="background:'+bg(x.album)+'" onclick="openBandcamp(getItem('+x.id+',\'wishlist\'))" title="open on bandcamp">'+(x.artUrl?'<img src="'+x.artUrl+'" onerror="this.style.display=\'none\'"/>' :'')+'<span class="wish-art-emoji">'+em(x.artist)+'</span></div><div class="wish-info" onclick="openBandcamp(getItem('+x.id+',\'wishlist\'))" title="open on bandcamp"><div class="wish-title">'+x.album+'</div><div class="wish-sub">'+x.artist+(x.year?' &middot; '+x.year:'')+'</div>'+(x.notes?'<div class="wish-note">'+x.notes+'</div>':'')+'</div><div class="wish-meta">'+(x.genre?'<span class="genre-pill">'+x.genre+'</span>':'')+'<span class="price-tag">$'+x.price.toFixed(2)+'</span>'+(x.bought?'<span class="owned-pill">&#10003; owned</span>':'<button class="buy-btn" onclick="markBought('+x.id+')">i bought this</button>')+'<div class="icon-btn" title="edit" onclick="openEdit('+x.id+',\'wishlist\')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></div></div></div>').join('')+'</div>';
 }
 
 function render(){
@@ -454,7 +454,7 @@ function quickRate(id,lst,n){const x=getItem(id,lst);if(x){x.rating=n;render();}
 function markBought(id){
   const x=wishlist.find(x=>x.id===id);if(!x)return;
   x.bought=true;
-  library.push({id:Date.now(),artist:x.artist,album:x.album,year:x.year,genre:x.genre,format:'FLAC',source:'Bandcamp',rating:x.rating||0,notes:x.notes||'',price:x.price||0,artUrl:x.artUrl,mbId:null,bcUrl:x.bcUrl||null});
+  library.push({id:Date.now(),artist:x.artist,album:x.album,year:x.year,genre:x.genre,format:'FLAC',source:'Bandcamp',rating:0,notes:'',artUrl:x.artUrl,mbId:null,bcUrl:x.bcUrl||null});
   render();showToast('"'+x.album+'" moved to library');
 }
 
@@ -472,17 +472,16 @@ function openAdd(){
   document.getElementById('add-modal').classList.add('open');
   setTimeout(()=>document.getElementById('mb-query').focus(),100);
 }
-
 function saveAdd(){
   const artist=document.getElementById('f-artist').value.trim(),album=document.getElementById('f-album').value.trim();
   if(!artist||!album){showToast('artist and album are required');return;}
   const year=parseInt(document.getElementById('f-year').value)||new Date().getFullYear();
   const genre=document.getElementById('f-genre').value||'';
   if(tab==='library'){
-    library.push({id:Date.now(),artist,album,year,genre,format:document.getElementById('f-format').value,source:document.getElementById('f-source').value,rating:0,notes:document.getElementById('f-notes').value.trim(),price:0,artUrl:selArt,mbId:selMbId,bcUrl:document.getElementById('f-bcurl').value.trim()||null});
+    library.push({id:Date.now(),artist,album,year,genre,format:document.getElementById('f-format').value,source:document.getElementById('f-source').value,rating:0,notes:document.getElementById('f-notes').value.trim(),artUrl:selArt,mbId:selMbId,bcUrl:document.getElementById('f-bcurl').value.trim()||null});
     showToast('"'+album+'" added to library');
   }else{
-    wishlist.push({id:Date.now(),artist,album,year,genre,price:parseFloat(document.getElementById('f-price').value)||0,rating:0,priority:document.getElementById('f-priority').value,notes:document.getElementById('f-wish-notes').value.trim(),bought:false,artUrl:selArt,bcUrl:document.getElementById('f-bcurl-wish').value.trim()||null});
+    wishlist.push({id:Date.now(),artist,album,year,genre,price:parseFloat(document.getElementById('f-price').value)||0,priority:document.getElementById('f-priority').value,notes:document.getElementById('f-wish-notes').value.trim(),bought:false,artUrl:selArt,bcUrl:document.getElementById('f-bcurl-wish').value.trim()||null});
     showToast('"'+album+'" added to wishlist');
   }
   closeModal('add-modal');render();
@@ -507,20 +506,20 @@ function openEdit(id,lst){
   document.getElementById('edit-album').value=item.album;
   document.getElementById('edit-year').value=item.year||'';
   document.getElementById('edit-genre').value=item.genre||'';
-  
-  document.getElementById('edit-price').value=item.price||0;
-  document.getElementById('edit-bcurl').value=item.bcUrl||'';
-  document.getElementById('edit-notes').value=item.notes||'';
-
   if(lst==='library'){
     document.getElementById('edit-lib-fields').style.display='block';
     document.getElementById('edit-wish-fields').style.display='none';
     document.getElementById('edit-format').value=item.format||'FLAC';
     document.getElementById('edit-source').value=item.source||'Bandcamp';
+    document.getElementById('edit-bcurl').value=item.bcUrl||'';
+    document.getElementById('edit-notes').value=item.notes||'';
   }else{
     document.getElementById('edit-lib-fields').style.display='none';
     document.getElementById('edit-wish-fields').style.display='block';
+    document.getElementById('edit-price').value=item.price||0;
     document.getElementById('edit-priority').value=item.priority||'mid';
+    document.getElementById('edit-bcurl-wish').value=item.bcUrl||'';
+    document.getElementById('edit-wish-notes').value=item.notes||'';
   }
   document.getElementById('edit-modal').classList.add('open');
 }
@@ -545,18 +544,18 @@ function saveEdit(){
   item.year=parseInt(document.getElementById('edit-year').value)||item.year;
   item.genre=document.getElementById('edit-genre').value||'';
   item.rating=editRating;
-  item.price=parseFloat(document.getElementById('edit-price').value)||0;
-  item.bcUrl=document.getElementById('edit-bcurl').value.trim()||null;
-  item.notes=document.getElementById('edit-notes').value.trim();
-  
   const manualUrl=document.getElementById('edit-art-url').value.trim();
   item.artUrl=manualUrl||null;
-
   if(editingList==='library'){
     item.format=document.getElementById('edit-format').value;
     item.source=document.getElementById('edit-source').value;
+    item.bcUrl=document.getElementById('edit-bcurl').value.trim()||null;
+    item.notes=document.getElementById('edit-notes').value.trim();
   }else{
+    item.price=parseFloat(document.getElementById('edit-price').value)||0;
     item.priority=document.getElementById('edit-priority').value;
+    item.bcUrl=document.getElementById('edit-bcurl-wish').value.trim()||null;
+    item.notes=document.getElementById('edit-wish-notes').value.trim();
   }
   closeModal('edit-modal');render();showToast('"'+item.album+'" updated');
 }
@@ -608,7 +607,7 @@ async function processCSV(file){
     const dateStr=dKey?row[dKey]||'':'';
     const year=dateStr?parseInt(dateStr.slice(0,4))||null:null;
     const fmt=fKey?row[fKey]||'':'';
-    library.push({id:Date.now()+added,artist,album,year,genre:'',format:fmt.toLowerCase().includes('flac')?'FLAC':'MP3',source:'Bandcamp',rating:0,price:0,notes:'',artUrl:null,mbId:null,bcUrl:uKey?row[uKey]||null:null});
+    library.push({id:Date.now()+added,artist,album,year,genre:'',format:fmt.toLowerCase().includes('flac')?'FLAC':'MP3',source:'Bandcamp',rating:0,notes:'',artUrl:null,mbId:null,bcUrl:uKey?row[uKey]||null:null});
     added++;
   }
   render();
