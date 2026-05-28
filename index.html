@@ -366,7 +366,7 @@ async function loadAllArt(){
   for(const item of [...library,...wishlist]){
     if(item.artUrl)continue;
     const url=await getArt(item.artist,item.album,item.mbId||null);
-    if(url){item.artUrl=url;render();}
+    if(url){item.artUrl=url;loadState();render();}
     await sleep(150);
   }
 }
@@ -455,7 +455,7 @@ function markBought(id){
   const x=wishlist.find(x=>x.id===id);if(!x)return;
   x.bought=true;
   library.push({id:Date.now(),artist:x.artist,album:x.album,year:x.year,genre:x.genre,format:'FLAC',source:'Bandcamp',rating:0,notes:'',artUrl:x.artUrl,mbId:null,bcUrl:x.bcUrl||null});
-  render();showToast('"'+x.album+'" moved to library');
+  saveState();render();showToast('"'+ x.album+'" moved to library');
 }
 
 function openAdd(){
@@ -557,7 +557,7 @@ function saveEdit(){
     item.bcUrl=document.getElementById('edit-bcurl-wish').value.trim()||null;
     item.notes=document.getElementById('edit-wish-notes').value.trim();
   }
-  closeModal('edit-modal');render();showToast('"'+item.album+'" updated');
+  saveState();closeModal('edit-modal');render();showToast('"'+ item.album+'" updated');
 }
 
 function showDel(){
@@ -568,7 +568,7 @@ function showDel(){
 function confirmDelete(){
   if(editingList==='library')library=library.filter(x=>x.id!==editingId);
   else wishlist=wishlist.filter(x=>x.id!==editingId);
-  closeModal('edit-modal');render();showToast('removed');
+  saveState();closeModal('edit-modal');render();showToast('removed');
 }
 
 function openImport(){document.getElementById('import-modal').classList.add('open');}
@@ -618,6 +618,10 @@ async function processCSV(file){
 }
 
 function showToast(msg){const t=document.getElementById('toast');document.getElementById('toast-msg').textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2800);}
+// STORAGE
+function saveState(){localStorage.setItem('crate-lib',JSON.stringify(library));localStorage.setItem('crate-wish',JSON.stringify(wishlist));}
+function loadState(){const lib=localStorage.getItem('crate-lib');const wish=localStorage.getItem('crate-wish');if(lib)library=JSON.parse(lib);if(wish)wishlist=JSON.parse(wish);}
+
 document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeModal('add-modal');closeModal('edit-modal');closeModal('import-modal');}});
 render();
 </script>
