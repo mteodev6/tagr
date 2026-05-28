@@ -453,7 +453,7 @@ function render(){
 }
 
 function getItem(id,lst){return(lst==='library'?library:wishlist).find(x=>x.id===id);}
-function quickRate(id,lst,n){const x=getItem(id,lst);if(x){x.rating=n;saveState();render();}}
+function quickRate(id,lst,n){const x=getItem(id,lst);if(x){x.rating=n;saveState();render();console.log("saved rating");}}
 function markBought(id){
   const x=wishlist.find(x=>x.id===id);if(!x)return;
   x.bought=true;
@@ -637,27 +637,33 @@ function initDB(){
 }
 function saveState(){
   if(!db)return;
-  const libTx=db.transaction('library','readwrite');
-  const libStore=libTx.objectStore('library');
-  libStore.clear();
-  library.forEach(item=>libStore.add(item));
-  const wishTx=db.transaction('wishlist','readwrite');
-  const wishStore=wishTx.objectStore('wishlist');
-  wishStore.clear();
-  wishlist.forEach(item=>wishStore.add(item));
+  try{
+    const libTx=db.transaction('library','readwrite');
+    const libStore=libTx.objectStore('library');
+    libStore.clear();
+    library.forEach(item=>libStore.add(item));
+    const wishTx=db.transaction('wishlist','readwrite');
+    const wishStore=wishTx.objectStore('wishlist');
+    wishStore.clear();
+    wishlist.forEach(item=>wishStore.add(item));
+  }catch(e){console.error('save error',e);}
 }
 function loadState(){
   return new Promise((resolve)=>{
     if(!db){resolve();return;}
-    const libTx=db.transaction('library','readonly');
-    const libStore=libTx.objectStore('library');
-    const libReq=libStore.getAll();
-    libReq.onsuccess=()=>{library=libReq.result||[];
-      const wishTx=db.transaction('wishlist','readonly');
-      const wishStore=wishTx.objectStore('wishlist');
-      const wishReq=wishStore.getAll();
-      wishReq.onsuccess=()=>{wishlist=wishReq.result||[];resolve();};
-    };
+    try{
+      const libTx=db.transaction('library','readonly');
+      const libStore=libTx.objectStore('library');
+      const libReq=libStore.getAll();
+      libReq.onsuccess=()=>{
+        library=libReq.result||[];
+        const wishTx=db.transaction('wishlist','readonly');
+        const wishStore=wishTx.objectStore('wishlist');
+        const wishReq=wishStore.getAll();
+        wishReq.onsuccess=()=>{wishlist=wishReq.result||[];resolve();};
+      };
+      libReq.onerror=()=>{resolve();};
+    }catch(e){console.error('load error',e);resolve();}
   });
 }
 
