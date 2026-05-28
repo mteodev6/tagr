@@ -618,9 +618,45 @@ async function processCSV(file){
 }
 
 function showToast(msg){const t=document.getElementById('toast');document.getElementById('toast-msg').textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2800);}
-// STORAGE
-function saveState(){localStorage.setItem('crate-lib',JSON.stringify(library));localStorage.setItem('crate-wish',JSON.stringify(wishlist));}
-function loadState(){const lib=localStorage.getItem('crate-lib');const wish=localStorage.getItem('crate-wish');if(lib)library=JSON.parse(lib);if(wish)wishlist=JSON.parse(wish);}
+// STORAGE - IndexedDB
+let db;
+function initDB(){
+  return new Promise((resolve,reject)=>{
+    const req=indexedDB.open('CRATE',1);
+    req.onerror=()=>reject(req.error);
+    req.onsuccess=()=>{db=req.result;resolve();};
+    req.onupgradeneeded=(e)=>{
+      const d=e.target.result;
+      if(!d.objectStoreNames.contains('library'))d.createObjectStore('library',{keyPath:'id'});
+      if(!d.objectStoreNames.contains('wishlist'))d.createObjectStore('wishlist',{keyPath:'id'});
+    };
+  });
+}
+function saveState(){
+  if(!db)return;
+  const libTx=db.transaction('library','readwrite');
+  const libStore=libTx.objectStore('library');
+  libStore.clear();
+  library.forEach(item=>libStore.add(item));
+  const wishTx=db.transaction('wishlist','readwrite');
+  const wishStore=wishTx.objectStore('wishlist');
+  wishStore.clear();
+  wishlist.forEach(item=>wishStore.add(item));
+}
+function loadState(){
+  return new Promise((resolve)=>{
+    if(!db){resolve();return;}
+    const libTx=db.transaction('library','readonly');
+    const libStore=libTx.objectStore('library');
+    const libReq=libStore.getAll();
+    libReq.onsuccess=()=>{library=libReq.result||[];
+      const wishTx=db.transaction('wishlist','readonly');
+      const wishStore=wishTx.objectStore('wishlist');
+      const wishReq=wishStore.getAll();
+      wishReq.onsuccess=()=>{wishlist=wishReq.result||[];resolve();};
+    };
+  });
+}
 
 document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeModal('add-modal');closeModal('edit-modal');closeModal('import-modal');}});
 render();
