@@ -169,7 +169,7 @@ select{background:var(--surface);border:0.5px solid var(--border);color:var(--te
       <div class="sidebar-stat"><span class="sidebar-stat-label">FLAC</span><span class="sidebar-stat-val" id="stat-flac">0</span></div>
       <div class="sidebar-stat"><span class="sidebar-stat-label">MP3</span><span class="sidebar-stat-val" id="stat-mp3">0</span></div>
       <div class="sidebar-stat"><span class="sidebar-stat-label">Avg rating</span><span class="sidebar-stat-val" id="stat-rating">--</span></div>
-    </div>
+    </div><div style="padding:14px 24px;border-top:1px solid var(--border);font-size:10px;color:var(--muted);letter-spacing:1px;text-transform:uppercase">v<span id="version">1.0.0</span></div>
     <button class="import-btn" onclick="openImport()">
       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
       import bandcamp csv
@@ -685,20 +685,73 @@ const firebaseConfig = {
   messagingSenderId: "817427728833",
   appId: "1:817427728833:web:bcc1386e3ca8e241530740"
 };
-firebase.initializeApp(firebaseConfig);
-const fbdb=firebase.database();
-let fbReady=false;
-fbdb.ref('.info/connected').on('value',snap=>{fbReady=snap.val();});
+let fbdb;
+let fbReady = false;
 
-function saveToFirebase(){
-  if(!fbReady)return;
-  const data={library,wishlist,updated:new Date().toISOString()};
-  fbdb.ref('collection').set(data).catch(e=>console.error('firebase save error',e));
+firebase.initializeApp(firebaseConfig);
+fbdb = firebase.database();
+
+fbdb.ref('.info/connected').on('value', snap => {
+  fbReady = snap.val();
+  console.log('Firebase connected:', fbReady);
+});
+
+function saveToFirebase() {
+  if (!fbReady) {
+    console.log('Firebase not ready, skipping save');
+    return;
+  }
+  try {
+    const version = (parseInt(localStorage.getItem('crate-version') || '0') + 1).toString();
+    localStorage.setItem('crate-version', version);
+    document.getElementById('version').textContent = '1.' + version;
+    
+    const data = {
+      library: library,
+      wishlist: wishlist,
+      updated: new Date().toISOString(),
+      version: version
+    };
+    fbdb.ref('collection').set(data, (error) => {
+      if (error) {
+        console.error('Firebase save error:', error);
+      } else {
+        console.log('Firebase saved v' + version);
+      }
+    });
+  } catch (e) {
+    console.error('save error:', e);
+  }
 }
 
-function loadFromFirebase(){
-  return new Promise(resolve=>{
-    if(!fbReady){resolve();return;}
+function loadFromFirebase() {
+  return new Promise(resolve => {
+    if (!fbReady) {
+      console.log('Firebase not ready for load');
+      resolve();
+      return;
+    }
+    fbdb.ref('collection').once('value', (snap) => {
+      if (snap.exists()) {
+        const data = snap.val();
+        if (data.library) library = data.library;
+        if (data.wishlist) wishlist = data.wishlist;
+        if (data.version) {
+          document.getElementById('version').textContent = '1.' + data.version;
+          localStorage.setItem('crate-version', data.version);
+        }
+        console.log('Loaded from Firebase v' + (data.version || '?'));
+      } else {
+        console.log('No data in Firebase yet');
+      }
+      resolve();
+    }, (error) => {
+      console.error('Firebase load error:', error);
+      resolve();
+    });
+  });
+}
+
     fbdb.ref('collection').once('value',snap=>{
       if(snap.exists()){
         const data=snap.val();
