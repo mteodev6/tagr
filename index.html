@@ -440,6 +440,13 @@ function renderWishlist(items){
 }
 
 function render(){
+  const v = localStorage.getItem('crate-v') || '1.0.0';
+  const parts = v.split('.');
+  parts[2] = parseInt(parts[2] || 0) + 1;
+  const newV = parts.join('.');
+  localStorage.setItem('crate-v', newV);
+  if(document.getElementById('version')) document.getElementById('version').textContent = newV;
+  
   const q=document.getElementById('search').value.toLowerCase(),g=document.getElementById('genre-filter').value;
   const lf=library.filter(x=>(!q||x.artist.toLowerCase().includes(q)||x.album.toLowerCase().includes(q))&&(!g||x.genre===g));
   const wf=wishlist.filter(x=>(!q||x.artist.toLowerCase().includes(q)||x.album.toLowerCase().includes(q))&&(!g||x.genre===g));
@@ -464,7 +471,7 @@ function markBought(id){
 function openAdd(){
   selArt=null;selMbId=null;
   document.getElementById('lib-fields').style.display=currentTab==='library'?'block':'none';
-  document.getElementById('wish-fields').style.display=tab==='wishlist'?'block':'none';
+  document.getElementById('wish-fields').style.display=currentTab==='wishlist'?'block':'none';
   document.getElementById('add-modal-title').textContent=currentTab==='library'?'add to library':'add to wishlist';
   document.getElementById('mb-results-wrap').style.display='none';
   document.getElementById('mb-results').innerHTML='';
@@ -1200,7 +1207,7 @@ function markBought(id){
 function openAdd(){
   selArt=null;selMbId=null;
   document.getElementById('lib-fields').style.display=currentTab==='library'?'block':'none';
-  document.getElementById('wish-fields').style.display=tab==='wishlist'?'block':'none';
+  document.getElementById('wish-fields').style.display=currentTab==='wishlist'?'block':'none';
   document.getElementById('add-modal-title').textContent=currentTab==='library'?'add to library':'add to wishlist';
   document.getElementById('mb-results-wrap').style.display='none';
   document.getElementById('mb-results').innerHTML='';
