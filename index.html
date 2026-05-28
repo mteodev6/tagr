@@ -337,8 +337,8 @@ select{background:var(--surface);border:0.5px solid var(--border);color:var(--te
 
 <script>
 var currentTab='library',selArt=null,selMbId=null;
-let editingId=null,editingList=null,editRating=0;
-let library=[],wishlist=[];
+
+
 
 const COLORS=['#1a2510','#10181a','#1a1018','#181510','#101820','#1a1010','#121a10'];
 const EMOJIS=['\u{1F3B5}','\u{1F4BF}','\u{1F300}','\u26A1','\u{1F5A4}','\u{1F50A}','\u{1F3A7}','\u{1F49C}','\u{1F9E8}','\u{1F319}'];
@@ -698,10 +698,23 @@ firebase.initializeApp(firebaseConfig);
 const fbdb = firebase.database();
 let fbReady = false;
 
+// Keep connection alive
 fbdb.ref('.info/connected').on('value', snap => {
   fbReady = snap.val();
   console.log('Firebase connected:', fbReady);
+  if(fbReady) saveToFirebase(); // Save when connection established
 });
+
+// Retry connection periodically
+setInterval(() => {
+  if(!fbReady) {
+    console.log('Retrying Firebase connection...');
+    fbdb.ref('.info/connected').once('value', snap => {
+      fbReady = snap.val();
+      if(fbReady) console.log('Firebase reconnected');
+    });
+  }
+}, 5000);
 
 function saveToFirebase() {
   if (!fbReady) return;
@@ -1080,8 +1093,8 @@ select{background:var(--surface);border:0.5px solid var(--border);color:var(--te
 
 <script>
 var currentTab='library',selArt=null,selMbId=null;
-let editingId=null,editingList=null,editRating=0;
-let library=[],wishlist=[];
+
+
 
 const COLORS=['#1a2510','#10181a','#1a1018','#181510','#101820','#1a1010','#121a10'];
 const EMOJIS=['\u{1F3B5}','\u{1F4BF}','\u{1F300}','\u26A1','\u{1F5A4}','\u{1F50A}','\u{1F3A7}','\u{1F49C}','\u{1F9E8}','\u{1F319}'];
