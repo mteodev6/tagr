@@ -450,7 +450,7 @@ function render(){
 }
 
 function getItem(id,lst){return(lst==='library'?library:wishlist).find(x=>x.id===id);}
-function quickRate(id,lst,n){const x=getItem(id,lst);if(x){x.rating=n;render();}}
+function quickRate(id,lst,n){const x=getItem(id,lst);if(x){x.rating=n;saveState();render();}}
 function markBought(id){
   const x=wishlist.find(x=>x.id===id);if(!x)return;
   x.bought=true;
