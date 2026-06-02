@@ -3,6 +3,10 @@ let currentTab='library', selArt=null, selMbId=null;
 let editingId=null, editingList=null, editRating=0;
 let library=[], wishlist=[];
 
+// BATCH SELECTION STATE
+let isSelectMode = false;
+let selectedIds = new Set();
+
 const COLORS=['#1a2510','#10181a','#1a1018','#181510','#101820','#1a1010','#121a10'];
 const EMOJIS=['🎵','💿','🌀','⚡','🖤','🔊','🎧','💜','🧨','🌙'];
 function hash(s){let h=5381;for(let i=0;i<s.length;i++)h=((h<<5)+h)+s.charCodeAt(i);return Math.abs(h);}
@@ -15,7 +19,7 @@ function imgExists(url){return new Promise(res=>{const i=new Image();i.onload=()
 async function itunesArt(artist,album){try{const q=encodeURIComponent(artist+' '+album);const r=await fetch('https://itunes.apple.com/search?term='+q+'&entity=album&limit=3');const d=await r.json();if(d.results&&d.results.length)return d.results[0].artworkUrl100.replace('100x100bb','600x600bb');}catch(e){}return null;}
 async function getArt(artist,album,mbId){const key=mbId||artist+'::'+album;if(artCache[key]!==undefined)return artCache[key];artCache[key]=null;if(mbId){const url='https://coverartarchive.org/release/'+mbId+'/front-250';if(await imgExists(url)){artCache[key]=url;return url;}}try{const q=encodeURIComponent('artist:"'+artist+'" release:"'+album+'"');const r=await fetch('https://musicbrainz.org/ws/2/release/?query='+q+'&limit=3&fmt=json',{headers:{'User-Agent':'CRATE/1.0'}});const d=await r.json();if(d.releases&&d.releases.length){for(const rel of d.releases){const url='https://coverartarchive.org/release/'+rel.id+'/front-250';if(await imgExists(url)){artCache[key]=url;return url;}}}}catch(e){}const it=await itunesArt(artist,album);artCache[key]=it;return it;}
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
-async function loadAllArt(){for(const item of [...library,...wishlist]){if(item.artUrl)continue;const url=await getArt(item.artist,item.album,item.mbId||null);if(url){item.artUrl=url;render();}await sleep(150);}}
+async function loadAllArt(){for(const item of [...library,...wishlist]){if(item.artUrl && !item.artUrl.startsWith("data:"))continue;const url=await getArt(item.artist,item.album,item.mbId||null);if(url){item.artUrl=url;render();}await sleep(150);}}
 
 // MUSICBRAINZ
 function artistStr(rel){if(!rel['artist-credit'])return '';return rel['artist-credit'].map(a=>typeof a==='string'?a:(a.artist?.name||'')).join('');}
@@ -52,9 +56,17 @@ function starsHtml(rating,id,lst){return Array.from({length:5},(_,i)=>`<span cla
 
 function renderLibrary(items){
   if(!items.length) return '<div class="empty"><div class="empty-icon">💿</div>your library is empty<div class="empty-hint">add albums manually or import your bandcamp collection</div></div>';
-  return '<div class="grid">' + items.map(x => 
-    `<div class="album-card">
-      <div class="album-art" style="background:${bg(x.album)}" onclick="openBandcamp(getItem(${x.id},'library'))">
+  return '<div class="grid">' + items.map(x => {
+    const isChecked = selectedIds.has(x.id) ? 'checked' : '';
+    const selectedClass = selectedIds.has(x.id) ? ' card-selected' : '';
+    
+    return `<div class="album-card${selectedClass}" data-id="${x.id}">
+      <div class="album-art" style="background:${bg(x.album)}" onclick="handleItemClick(event, ${x.id}, 'library')">
+        ${isSelectMode ? `
+          <div class="batch-checkbox-wrap" onclick="event.stopPropagation()">
+            <input type="checkbox" class="batch-checkbox" ${isChecked} onchange="toggleItemSelection(${x.id})">
+          </div>
+        ` : ''}
         <img src="${x.artUrl||''}" style="display:${x.artUrl?'block':'none'}">
         <span class="album-art-emoji" style="display:${x.artUrl?'none':'block'}">${em(x.album)}</span>
         <div class="card-actions">
@@ -71,32 +83,39 @@ function renderLibrary(items){
           <div class="stars-row">${starsHtml(x.rating,x.id,'library')}</div>
         </div>
       </div>
-    </div>`
-  ).join('') + '</div>';
+    </div>`;
+  }).join('') + '</div>';
 }
 
 function renderWishlist(items){
   if(!items.length) return '<div class="empty"><div class="empty-icon">✨</div>your wishlist is empty</div>';
-  return '<div class="wish-list">' + items.map(x => 
-    `<div class="wish-row${x.bought?' bought':''}">
-      <div class="priority-dot p-${x.priority}"></div>
-      <div class="wish-art" onclick="openBandcamp(getItem(${x.id},'wishlist'))">
+  return '<div class="wish-list">' + items.map(x => {
+    const isChecked = selectedIds.has(x.id) ? 'checked' : '';
+    const selectedClass = selectedIds.has(x.id) ? ' card-selected' : '';
+    
+    return `<div class="wish-row${x.bought?' bought':''}${selectedClass}" onclick="handleItemClick(event, ${x.id}, 'wishlist')">
+      ${isSelectMode ? `
+        <div class="batch-checkbox-wrap" onclick="event.stopPropagation()">
+          <input type="checkbox" class="batch-checkbox" ${isChecked} onchange="toggleItemSelection(${x.id})">
+        </div>
+      ` : `<div class="priority-dot p-${x.priority}"></div>`}
+      <div class="wish-art">
         <img src="${x.artUrl||''}" style="display:${x.artUrl?'block':'none'}">
         <span class="wish-art-emoji" style="display:${x.artUrl?'none':'block'}">${em(x.album)}</span>
       </div>
-      <div class="wish-info" onclick="openEdit(${x.id},'wishlist')">
+      <div class="wish-info">
         <div class="wish-title">${x.album}</div>
         <div class="wish-sub">${x.artist}</div>
       </div>
-      <div class="wish-meta">
+      <div class="wish-meta" onclick="event.stopPropagation()">
         <div class="price-tag">$${x.price}</div>
         <button class="icon-btn" onclick="openEdit(${x.id},'wishlist')">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
         </button>
         <button class="buy-btn" onclick="markBought(${x.id})">mark bought</button>
       </div>
-    </div>`
-  ).join('') + '</div>';
+    </div>`;
+  }).join('') + '</div>';
 }
 
 function render(){const q=document.getElementById('search').value.toLowerCase(),g=document.getElementById('genre-filter').value;const lf=library.filter(x=>(!q||x.artist.toLowerCase().includes(q)||x.album.toLowerCase().includes(q))&&(!g||x.genre===g));const wf=wishlist.filter(x=>(!q||x.artist.toLowerCase().includes(q)||x.album.toLowerCase().includes(q))&&(!g||x.genre===g));document.getElementById('lib-count').textContent=library.length;document.getElementById('wish-count').textContent=wishlist.filter(x=>!x.bought).length;document.getElementById('stat-flac').textContent=library.filter(x=>x.format==='FLAC').length;document.getElementById('stat-mp3').textContent=library.filter(x=>x.format==='MP3').length;const rated=library.filter(x=>x.rating>0);document.getElementById('stat-rating').textContent=rated.length?(rated.reduce((s,x)=>s+x.rating,0)/rated.length).toFixed(1):'--';document.getElementById('content').innerHTML=currentTab==='library'?renderLibrary(lf):renderWishlist(wf);}
@@ -127,6 +146,7 @@ function dropFile(e){e.preventDefault();dragLeave();const f=e.dataTransfer.files
 function handleFile(e){const f=e.target.files[0];if(f)processCSV(f);}
 function splitCSV(line){const cols=[];let cur='',inQ=false;for(const c of line){if(c==='"'){inQ=!inQ;}else if(c===','&&!inQ){cols.push(cur.trim());cur='';}else cur+=c;}cols.push(cur.trim());return cols;}
 function parseCSV(text){const lines=text.split(/\r?\n/);if(!lines.length)return[];const header=splitCSV(lines[0]).map(h=>h.toLowerCase().trim());const rows=[];for(let i=1;i<lines.length;i++){const l=lines[i].trim();if(!l)continue;const cols=splitCSV(l);const row={};header.forEach((h,i)=>row[h]=(cols[i]||'').replace(/^"|"$/g,''));rows.push(row);}return rows;}
+
 async function processCSV(file){
   const status=document.getElementById('import-status');
   status.textContent='reading file...';
@@ -140,7 +160,6 @@ async function processCSV(file){
   const dKey=keys.find(k=>k.includes('release date')||k.includes('release_date'))||keys.find(k=>k.includes('date'));
   const uKey=keys.find(k=>k.includes('url')||k.includes('link'));
   
-  // A clean local 1x1 pixel dark transparent placeholder image 
   const localArtPlaceholder = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=";
 
   let added=0,skipped=0;
@@ -159,11 +178,11 @@ async function processCSV(file){
       album,
       year,
       genre:'',
-      format:'FLAC', // FORCED: All imported items are hardcoded to FLAC format
+      format:'FLAC', // Hardcoded format automation setup
       source:'Bandcamp',
       rating:0,
       notes:'',
-      artUrl:localArtPlaceholder, // STORED LOCALLY: Initializing fallback string locally
+      artUrl:localArtPlaceholder,
       mbId:null,
       bcUrl:uKey?row[uKey]||null:null
     });
@@ -176,8 +195,97 @@ async function processCSV(file){
   await loadAllArt();
   status.textContent='done';
 }
+
 // TOAST
 function showToast(msg){const t=document.getElementById('toast');document.getElementById('toast-msg').textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2800);}
+
+// BATCH SELECTION ENGINE ACTIONS
+function toggleSelectMode() {
+  isSelectMode = !isSelectMode;
+  selectedIds.clear();
+  
+  const contentEl = document.getElementById('content');
+  const btn = document.getElementById('select-mode-btn');
+  
+  if (isSelectMode) {
+    contentEl.classList.add('selecting-active');
+    btn.textContent = 'cancel';
+    btn.classList.add('btn-accent');
+  } else {
+    contentEl.classList.remove('selecting-active');
+    btn.textContent = 'select';
+    btn.classList.remove('btn-accent');
+    document.getElementById('batch-actions-bar').style.display = 'none';
+  }
+  render();
+}
+
+function handleItemClick(event, id, currentList) {
+  if (isSelectMode) {
+    toggleItemSelection(id);
+  } else {
+    if (currentList === 'library') {
+      const item = getItem(id, 'library');
+      openBandcamp(item);
+    } else {
+      openEdit(id, 'wishlist');
+    }
+  }
+}
+
+function toggleItemSelection(id) {
+  if (selectedIds.has(id)) {
+    selectedIds.delete(id);
+  } else {
+    selectedIds.add(id);
+  }
+  
+  const bar = document.getElementById('batch-actions-bar');
+  const countText = document.getElementById('batch-count-text');
+  
+  if (selectedIds.size > 0) {
+    bar.style.display = 'flex';
+    countText.textContent = `${selectedIds.size} selected`;
+  } else {
+    bar.style.display = 'none';
+  }
+  render();
+}
+
+async function batchRefreshArt() {
+  if (selectedIds.size === 0) return;
+  showToast(`refreshing art for ${selectedIds.size} items...`);
+  const currentList = currentTab === 'library' ? library : wishlist;
+  
+  for (const id of selectedIds) {
+    const item = currentList.find(x => x.id === id);
+    if (item) {
+      const key = item.mbId || item.artist + '::' + item.album;
+      delete artCache[key];
+      const url = await getArt(item.artist, item.album, item.mbId || null);
+      if (url) item.artUrl = url;
+    }
+    await sleep(150);
+  }
+  saveState();
+  toggleSelectMode();
+  showToast('batch artwork refresh complete');
+}
+
+function batchDelete() {
+  if (selectedIds.size === 0) return;
+  if (!confirm(`Are you sure you want to remove these ${selectedIds.size} items permanently?`)) return;
+  
+  if (currentTab === 'library') {
+    library = library.filter(x => !selectedIds.has(x.id));
+  } else {
+    wishlist = wishlist.filter(x => !selectedIds.has(x.id));
+  }
+  
+  saveState();
+  toggleSelectMode();
+  showToast('selected items removed');
+}
 
 // INIT
 document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeModal('add-modal');closeModal('edit-modal');closeModal('import-modal');}});
