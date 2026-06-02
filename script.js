@@ -127,8 +127,57 @@ function dropFile(e){e.preventDefault();dragLeave();const f=e.dataTransfer.files
 function handleFile(e){const f=e.target.files[0];if(f)processCSV(f);}
 function splitCSV(line){const cols=[];let cur='',inQ=false;for(const c of line){if(c==='"'){inQ=!inQ;}else if(c===','&&!inQ){cols.push(cur.trim());cur='';}else cur+=c;}cols.push(cur.trim());return cols;}
 function parseCSV(text){const lines=text.split(/\r?\n/);if(!lines.length)return[];const header=splitCSV(lines[0]).map(h=>h.toLowerCase().trim());const rows=[];for(let i=1;i<lines.length;i++){const l=lines[i].trim();if(!l)continue;const cols=splitCSV(l);const row={};header.forEach((h,i)=>row[h]=(cols[i]||'').replace(/^"|"$/g,''));rows.push(row);}return rows;}
-async function processCSV(file){const status=document.getElementById('import-status');status.textContent='reading file...';const text=await file.text();const rows=parseCSV(text);if(!rows.length){status.textContent='no data found';return;}const keys=Object.keys(rows[0]);const aKey=keys.find(k=>k.includes('artist'))||keys[0];const tKey=keys.find(k=>k.includes('title')||k.includes('album'))||keys[1];const dKey=keys.find(k=>k.includes('release date')||k.includes('release_date'))||keys.find(k=>k.includes('date'));const fKey=keys.find(k=>k.includes('format'));const uKey=keys.find(k=>k.includes('url')||k.includes('link'));let added=0,skipped=0;for(const row of rows){const artist=(row[aKey]||'').trim(),album=(row[tKey]||'').trim();if(!artist&&!album){skipped++;continue;}if(library.find(l=>l.artist.toLowerCase()===artist.toLowerCase()&&l.album.toLowerCase()===album.toLowerCase())){skipped++;continue;}const dateStr=dKey?row[dKey]||'':'';const year=dateStr?parseInt(dateStr.slice(0,4))||null:null;const fmt=fKey?row[fKey]||'':'';library.push({id:Date.now()+added,artist,album,year,genre:'',format:fmt.toLowerCase().includes('flac')?'FLAC':'MP3',source:'Bandcamp',rating:0,notes:'',artUrl:null,mbId:null,bcUrl:uKey?row[uKey]||null:null});added++;}saveState();render();showToast('imported '+added);status.textContent='fetching art...';await loadAllArt();status.textContent='done';}
-
+async function processCSV(file){
+  const status=document.getElementById('import-status');
+  status.textContent='reading file...';
+  const text=await file.text();
+  const rows=parseCSV(text);
+  if(!rows.length){status.textContent='no data found';return;}
+  
+  const keys=Object.keys(rows[0]);
+  const aKey=keys.find(k=>k.includes('artist'))||keys[0];
+  
+  // FIXED: Explicitly checks for 'name' from your custom file headers
+  const tKey=keys.find(k=>k.includes('title')||k.includes('album')||k.includes('name'))||keys[1];
+  
+  const dKey=keys.find(k=>k.includes('release date')||k.includes('release_date'))||keys.find(k=>k.includes('date'));
+  const fKey=keys.find(k=>k.includes('format'));
+  const uKey=keys.find(k=>k.includes('url')||k.includes('link'));
+  
+  let added=0,skipped=0;
+  for(const row of rows){
+    const artist=(row[aKey]||'').trim(),album=(row[tKey]||'').trim();
+    if(!artist&&!album){skipped++;continue;}
+    if(library.find(l=>l.artist.toLowerCase()===artist.toLowerCase()&&l.album.toLowerCase()===album.toLowerCase())){
+      skipped++;continue;
+    }
+    const dateStr=dKey?row[dKey]||'':'';
+    const year=dateStr?parseInt(dateStr.slice(0,4))||null:null;
+    const fmt=fKey?row[fKey]||'':'';
+    
+    library.push({
+      id:Date.now()+added,
+      artist,
+      album,
+      year,
+      genre:'',
+      format:fmt.toLowerCase().includes('flac')?'FLAC':'MP3',
+      source:'Bandcamp',
+      rating:0,
+      notes:'',
+      artUrl:null,
+      mbId:null,
+      bcUrl:uKey?row[uKey]||null:null
+    });
+    added++;
+  }
+  saveState();
+  render();
+  showToast('imported '+added);
+  status.textContent='fetching art...';
+  await loadAllArt();
+  status.textContent='done';
+}
 // TOAST
 function showToast(msg){const t=document.getElementById('toast');document.getElementById('toast-msg').textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2800);}
 
