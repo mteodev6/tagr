@@ -4,8 +4,165 @@ let editingId=null, editingList=null, editRating=0;
 let library=[], wishlist=[];
 
 // BATCH SELECTION STATE
-let isSelectMode = false;
-let selectedIds = new Set();
+// --- UPDATED BATCH SELECTION ENGINE ACTIONS ---
+
+function toggleSelectMode() {
+  isSelectMode = !isSelectMode;
+  selectedIds.clear();
+  
+  const contentEl = document.getElementById('content');
+  const btn = document.getElementById('select-mode-btn');
+  const bar = document.getElementById('batch-actions-bar');
+  
+  if (isSelectMode) {
+    contentEl.classList.add('selecting-active');
+    btn.textContent = 'cancel';
+    btn.classList.add('btn-accent');
+    
+    // Inject a "Select All" button into the floating bar if it isn't there already
+    if (!document.getElementById('batch-select-all-btn')) {
+      const selectAllBtn = document.createElement('button');
+      selectAllBtn.className = 'btn';
+      selectAllBtn.id = 'batch-select-all-btn';
+      selectAllBtn.style.fontSize = '11px';
+      selectAllBtn.textContent = 'select all';
+      selectAllBtn.onclick = toggleSelectAll;
+      bar.insertBefore(selectAllBtn, bar.children[1]); // Places it right after the count text
+    }
+    document.getElementById('batch-select-all-btn').textContent = 'select all';
+  } else {
+    contentEl.classList.remove('selecting-active');
+    btn.textContent = 'select';
+    btn.classList.remove('btn-accent');
+    bar.style.display = 'none';
+    
+    // Clean up the button when exiting selection mode
+    document.getElementById('batch-select-all-btn')?.remove();
+  }
+  render();
+}
+
+function toggleSelectAll() {
+  const currentList = currentTab === 'library' ? library : wishlist;
+  const q = document.getElementById('search').value.toLowerCase();
+  const g = document.getElementById('genre-filter').value;
+  
+  // Filter the items exactly how they are currently shown on the screen
+  const visibleItems = currentList.filter(x => 
+    (!q || x.artist.toLowerCase().includes(q) || x.album.toLowerCase().includes(q)) && 
+    (!g || x.genre === g)
+  );
+
+  const selectAllBtn = document.getElementById('batch-select-all-btn');
+
+  // If everything visible is already selected, deselect them. Otherwise, select all visible.
+  const allVisibleSelected = visibleItems.every(x => selectedIds.has(x.id));
+
+  if (allVisibleSelected) {
+    visibleItems.forEach(x => selectedIds.delete(x.id));
+    selectAllBtn.textContent = 'select all';
+  } else {
+    visibleItems.forEach(x => selectedIds.add(x.id));
+    selectAllBtn.textContent = 'deselect all';
+  }
+
+  // Update floating action bar status
+  const bar = document.getElementById('batch-actions-bar');
+  const countText = document.getElementById('batch-count-text');
+  
+  if (selectedIds.size > 0) {
+    bar.style.display = 'flex';
+    countText.textContent = `${selectedIds.size} selected`;
+  } else {
+    bar.style.display = 'none';
+  }
+
+  render();
+}
+
+function handleItemClick(event, id, currentList) {
+  if (isSelectMode) {
+    toggleItemSelection(id);
+  } else {
+    if (currentList === 'library') {
+      const item = getItem(id, 'library');
+      openBandcamp(item);
+    } else {
+      openEdit(id, 'wishlist');
+    }
+  }
+}
+
+function toggleItemSelection(id) {
+  if (selectedIds.has(id)) {
+    selectedIds.delete(id);
+  } else {
+    selectedIds.add(id);
+  }
+  
+  const bar = document.getElementById('batch-actions-bar');
+  const countText = document.getElementById('batch-count-text');
+  const selectAllBtn = document.getElementById('batch-select-all-btn');
+  
+  const currentList = currentTab === 'library' ? library : wishlist;
+  const q = document.getElementById('search').value.toLowerCase();
+  const g = document.getElementById('genre-filter').value;
+  const visibleItems = currentList.filter(x => 
+    (!q || x.artist.toLowerCase().includes(q) || x.album.toLowerCase().includes(q)) && 
+    (!g || x.genre === g)
+  );
+
+  if (selectedIds.size > 0) {
+    bar.style.display = 'flex';
+    countText.textContent = `${selectedIds.size} selected`;
+    
+    // Dynamically change text if manual clicks end up selecting or deselecting everything
+    if (visibleItems.every(x => selectedIds.has(x.id))) {
+      if (selectAllBtn) selectAllBtn.textContent = 'deselect all';
+    } else {
+      if (selectAllBtn) selectAllBtn.textContent = 'select all';
+    }
+  } else {
+    bar.style.display = 'none';
+    if (selectAllBtn) selectAllBtn.textContent = 'select all';
+  }
+  render();
+}
+
+async function batchRefreshArt() {
+  if (selectedIds.size === 0) return;
+  showToast(`refreshing art for ${selectedIds.size} items...`);
+  const currentList = currentTab === 'library' ? library : wishlist;
+  
+  for (const id of selectedIds) {
+    const item = currentList.find(x => x.id === id);
+    if (item) {
+      const key = item.mbId || item.artist + '::' + item.album;
+      delete artCache[key];
+      const url = await getArt(item.artist, item.album, item.mbId || null);
+      if (url) item.artUrl = url;
+    }
+    await sleep(150);
+  }
+  saveState();
+  toggleSelectMode();
+  showToast('batch artwork refresh complete');
+}
+
+function batchDelete() {
+  if (selectedIds.size === 0) return;
+  if (!confirm(`Are you sure you want to remove these ${selectedIds.size} items permanently?`)) return;
+  
+  if (currentTab === 'library') {
+    library = library.filter(x => !selectedIds.has(x.id));
+  } else {
+    wishlist = wishlist.filter(x => !selectedIds.has(x.id));
+  }
+  
+  saveState();
+  toggleSelectMode();
+  showToast('selected items removed');
+}
 
 const COLORS=['#1a2510','#10181a','#1a1018','#181510','#101820','#1a1010','#121a10'];
 const EMOJIS=['🎵','💿','🌀','⚡','🖤','🔊','🎧','💜','🧨','🌙'];
