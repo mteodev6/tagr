@@ -1,11 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CRATE</title>
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CRATE</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
 <div class="shell">
@@ -25,7 +25,8 @@
       <div class="sidebar-stat"><span class="sidebar-stat-label">FLAC</span><span class="sidebar-stat-val" id="stat-flac">0</span></div>
       <div class="sidebar-stat"><span class="sidebar-stat-label">MP3</span><span class="sidebar-stat-val" id="stat-mp3">0</span></div>
       <div class="sidebar-stat"><span class="sidebar-stat-label">Avg rating</span><span class="sidebar-stat-val" id="stat-rating">--</span></div>
-    </div><div style="padding:14px 24px;border-top:1px solid var(--border);font-size:10px;color:var(--muted);letter-spacing:1px;text-transform:uppercase">v<span id="version">1.0.0</span></div>
+    </div>
+    <div style="padding:14px 24px;border-top:1px solid var(--border);font-size:10px;color:var(--muted);letter-spacing:1px;text-transform:uppercase">v<span id="version">1.0.0</span></div>
     <button class="import-btn" onclick="openImport()">
       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
       import bandcamp csv
@@ -43,6 +44,7 @@
         <option>hip-hop</option><option>experimental</option><option>ambient</option><option>noise</option>
       </select>
       <div class="topbar-right">
+        <button class="btn" id="select-mode-btn" onclick="toggleSelectMode()">select</button>
         <button class="btn btn-accent" onclick="openAdd()">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
           add
@@ -51,6 +53,19 @@
     </div>
     <div class="content" id="content"></div>
   </main>
+</div>
+
+<div id="batch-actions-bar" style="display: none; position: fixed; bottom: 22px; left: 50%; transform: translateX(-50%); background: #111; border: 1.5px solid var(--border2); padding: 12px 24px; border-radius: 8px; z-index: 90; align-items: center; gap: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.5);">
+  <span id="batch-count-text" style="font-size: 12px; font-weight: 500; color: var(--accent);">0 selected</span>
+  <button class="btn" onclick="batchRefreshArt()" style="font-size: 11px;">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:11px;height:11px;margin-right:4px;"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.88"/></svg>
+    refresh art
+  </button>
+  <button class="btn btn-danger" onclick="batchDelete()" style="font-size: 11px;">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:11px;height:11px;margin-right:4px;"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg>
+    delete selected
+  </button>
+  <button class="btn btn-ghost" onclick="toggleSelectMode()" style="font-size: 11px; padding: 7px 10px;">cancel</button>
 </div>
 
 <div class="modal-backdrop" id="add-modal" onclick="bgClose(event,'add-modal')">
@@ -179,10 +194,13 @@
     </div>
     <input type="file" id="bc-file" accept=".csv" style="display:none" onchange="handleFile(event)"/>
     <div id="import-status" style="margin-top:12px;font-size:12px;color:var(--muted);text-align:center;min-height:18px;"></div>
-    <div class="modal-actions"><button class="btn" onclick="exportData()" style="margin-right:auto">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-          export json
-        </button><button class="btn btn-ghost" onclick="closeModal('import-modal')">close</button></div>
+    <div class="modal-actions">
+      <button class="btn" onclick="exportData()" style="margin-right:auto">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        export json
+      </button>
+      <button class="btn btn-ghost" onclick="closeModal('import-modal')">close</button>
+    </div>
   </div>
 </div>
 
