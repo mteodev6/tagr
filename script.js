@@ -136,14 +136,13 @@ async function processCSV(file){
   
   const keys=Object.keys(rows[0]);
   const aKey=keys.find(k=>k.includes('artist'))||keys[0];
-  
-  // FIXED: Explicitly checks for 'name' from your custom file headers
   const tKey=keys.find(k=>k.includes('title')||k.includes('album')||k.includes('name'))||keys[1];
-  
   const dKey=keys.find(k=>k.includes('release date')||k.includes('release_date'))||keys.find(k=>k.includes('date'));
-  const fKey=keys.find(k=>k.includes('format'));
   const uKey=keys.find(k=>k.includes('url')||k.includes('link'));
   
+  // A clean local 1x1 pixel dark transparent placeholder image 
+  const localArtPlaceholder = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=";
+
   let added=0,skipped=0;
   for(const row of rows){
     const artist=(row[aKey]||'').trim(),album=(row[tKey]||'').trim();
@@ -153,7 +152,6 @@ async function processCSV(file){
     }
     const dateStr=dKey?row[dKey]||'':'';
     const year=dateStr?parseInt(dateStr.slice(0,4))||null:null;
-    const fmt=fKey?row[fKey]||'':'';
     
     library.push({
       id:Date.now()+added,
@@ -161,11 +159,11 @@ async function processCSV(file){
       album,
       year,
       genre:'',
-      format:fmt.toLowerCase().includes('flac')?'FLAC':'MP3',
+      format:'FLAC', // FORCED: All imported items are hardcoded to FLAC format
       source:'Bandcamp',
       rating:0,
       notes:'',
-      artUrl:null,
+      artUrl:localArtPlaceholder, // STORED LOCALLY: Initializing fallback string locally
       mbId:null,
       bcUrl:uKey?row[uKey]||null:null
     });
