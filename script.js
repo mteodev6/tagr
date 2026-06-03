@@ -8,7 +8,7 @@ let isSelectMode = false;
 let selectedIds = new Set();
 
 const COLORS=['#1a2510','#10181a','#1a1018','#181510','#101820','#1a1010','#121a10'];
-const EMOJIS=['🎵','💿','🌀','⚡','🖤','🔊','🎧','💜','🧨','🌙'];
+const EMOJIS=['🎵'];
 function hash(s){let h=5381;for(let i=0;i<s.length;i++)h=((h<<5)+h)+s.charCodeAt(i);return Math.abs(h);}
 function bg(s){return COLORS[hash(s)%COLORS.length];}
 function em(s){return EMOJIS[hash(s)%EMOJIS.length];}
@@ -31,7 +31,11 @@ function makeProgressBar(current, total) {
 }
 
 async function loadAllArt(){
-  const targets = [...library, ...wishlist].filter(item => !item.artUrl || item.artUrl.startsWith("data:"));
+  // DEFINITION: Match the exact fallback placeholder string used in processCSV
+  const placeholder = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=";
+  
+  // Target items that either have NO artUrl, or are explicitly using the placeholder string
+  const targets = [...library, ...wishlist].filter(item => !item.artUrl || item.artUrl === placeholder);
   const total = targets.length;
   const status = document.getElementById('import-status');
   
@@ -40,8 +44,13 @@ async function loadAllArt(){
   let current = 0;
   for(const item of targets){
     if(status) status.textContent = 'fetching art... ' + makeProgressBar(current, total);
-    const url=await getArt(item.artist,item.album,item.mbId||null);
-    if(url){item.artUrl=url;render();}
+    
+    // Request network artwork matching metadata string values
+    const url = await getArt(item.artist, item.album, item.mbId || null);
+    if(url){
+      item.artUrl = url;
+      render();
+    }
     current++;
     await sleep(150);
   }
