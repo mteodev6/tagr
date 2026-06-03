@@ -187,6 +187,9 @@ async function processCSV(file){
   const dKey=keys.find(k=>k.includes('release date')||k.includes('release_date'))||keys.find(k=>k.includes('date'));
   const uKey=keys.find(k=>k.includes('url')||k.includes('link'));
   
+  // New key lookup for explicit Bandcamp Art asset IDs
+  const artIdKey=keys.find(k=>k.includes('art_id')||k.includes('artid')||k.includes('image_id'));
+  
   const localArtPlaceholder = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=";
 
   let added=0,skipped=0;
@@ -199,6 +202,15 @@ async function processCSV(file){
     const dateStr=dKey?row[dKey]||'':'';
     const year=dateStr?parseInt(dateStr.slice(0,4))||null:null;
     
+    // Check if the CSV row has a direct Bandcamp Art ID string
+    const targetArtId=(artIdKey && row[artIdKey]) ? row[artIdKey].trim() : null;
+    let computedArtUrl = localArtPlaceholder;
+    
+    // If it exists, map directly to Bandcamp's public open image server grid
+    if(targetArtId && !isNaN(targetArtId)) {
+      computedArtUrl = `https://f4.bcbits.com/img/a${targetArtId}_10.jpg`;
+    }
+    
     library.push({
       id:Date.now()+added,
       artist,
@@ -209,7 +221,7 @@ async function processCSV(file){
       source:'Bandcamp',
       rating:0,
       notes:'',
-      artUrl:localArtPlaceholder,
+      artUrl:computedArtUrl,
       mbId:null,
       bcUrl:uKey?row[uKey]||null:null
     });
@@ -218,6 +230,8 @@ async function processCSV(file){
   saveState();
   render();
   showToast('imported '+added);
+  
+  // Only trigger backend scrapers for tracks that are still sitting on the local placeholder
   await loadAllArt();
 }
 
