@@ -11,7 +11,6 @@ function showToast(msg) {
   }
 }
 
-// MAKE PROGRESS BAR STRING
 function makeProgressBar(current, total) {
   const size = 10;
   const percentage = Math.floor((current / total) * 100);
@@ -30,8 +29,6 @@ let editingList = null;
 let editRating = 0;
 let library = [];
 let wishlist = [];
-
-// BATCH SELECTION STATE
 let isSelectMode = false;
 let selectedIds = new Set();
 
@@ -40,6 +37,72 @@ const EMOJIS = ['🎵','💿','🌀','⚡','🖤','🔊','🎧','💜','🧨','�
 function hash(s) { let h = 5381; for(let i=0; i<s.length; i++) h = ((h << 5) + h) + s.charCodeAt(i); return Math.abs(h); }
 function bg(s) { return COLORS[hash(s) % COLORS.length]; }
 function em(s) { return EMOJIS[hash(s) % EMOJIS.length]; }
+
+// --- DATA PERSISTENCE ---
+function saveState() { try { localStorage.setItem('crate-lib', JSON.stringify(library)); localStorage.setItem('crate-wish', JSON.stringify(wishlist)); updateVersion(); } catch(e) {} }
+function loadState() { return new Promise(resolve => { try { const lib = localStorage.getItem('crate-lib'); const wish = localStorage.getItem('crate-wish'); if(lib) library = JSON.parse(lib); if(wish) wishlist = JSON.parse(wish); } catch(e) {} resolve(); }); }
+function updateVersion() { const v = localStorage.getItem('crate-v') || '1.0.0'; const parts = v.split('.'); parts[2] = parseInt(parts[2] || 0) + 1; const newV = parts.join('.'); localStorage.setItem('crate-v', newV); if(document.getElementById('version')) document.getElementById('version').textContent = newV; }
+
+// --- CSV IMPORT ENGINE ---
+function splitCSV(line) {
+  const cols = []; let cur = '', inQ = false;
+  for(const c of line) { if(c === '"') { inQ = !inQ; } else if(c === ',' && !inQ) { cols.push(cur.trim()); cur = ''; } else cur += c; }
+  cols.push(cur.trim()); return cols;
+}
+
+function parseCSV(text) {
+  const lines = text.split(/\r?\n/); if(!lines.length) return [];
+  const header = splitCSV(lines[0]).map(h => h.toLowerCase().trim());
+  const rows = [];
+  for(let i = 1; i < lines.length; i++) {
+    const l = lines[i].trim(); if(!l) continue;
+    const cols = splitCSV(l); const row = {};
+    header.forEach((h, i) => row[h] = (cols[i] || '').replace(/^"|"$/g, ''));
+    rows.push(row);
+  }
+  return rows;
+}
+
+async function processCSV(file) {
+  const status = document.getElementById('import-status');
+  if (status) status.textContent = 'reading file...';
+  const text = await file.text();
+  const rows = parseCSV(text);
+  if (!rows.length) { if (status) status.textContent = 'no data found'; return; }
+
+  const keys = Object.keys(rows[0]);
+  const aKey = keys.find(k => k.includes('artist')) || keys[0];
+  const tKey = keys.find(k => k.includes('title') || k.includes('album') || k.includes('name')) || keys[1];
+  const uKey = keys.find(k => k.includes('url') || k.includes('link'));
+  const artIdKey = keys.find(k => k.includes('art_id') || k.includes('artid') || k.includes('image_id'));
+
+  let added = 0;
+  for (const row of rows) {
+    const artist = (row[aKey] || '').trim(), album = (row[tKey] || '').trim();
+    if (!artist && !album) continue;
+    const targetList = currentTab === 'library' ? library : wishlist;
+    if (targetList.find(l => l.artist.toLowerCase() === artist.toLowerCase() && l.album.toLowerCase() === album.toLowerCase())) continue;
+
+    const targetArtId = (artIdKey && row[artIdKey]) ? row[artIdKey].trim() : null;
+    let computedArtUrl = targetArtId && !isNaN(targetArtId) ? `https://f4.bcbits.com/img/a${targetArtId}_10.jpg` : LOCAL_PLACEHOLDER;
+
+    if (currentTab === 'library') {
+      library.push({ id: Date.now() + added, artist, album, year: new Date().getFullYear(), genre: '', format: 'FLAC', source: 'Bandcamp', rating: 0, notes: '', artUrl: computedArtUrl, mbId: null, bcUrl: uKey ? row[uKey] || null : null });
+    } else {
+      wishlist.push({ id: Date.now() + added, artist, album, year: new Date().getFullYear(), genre: '', price: 0, priority: 'mid', notes: 'Imported', bought: false, artUrl: computedArtUrl, bcUrl: uKey ? row[uKey] || null : null });
+    }
+    added++;
+  }
+  saveState();
+  render();
+  showToast('imported ' + added + ' to ' + currentTab);
+  await loadAllArt();
+}
+
+function dragOver(e) { e.preventDefault(); document.getElementById('drop-zone').classList.add('drag-over'); }
+function dragLeave() { document.getElementById('drop-zone').classList.remove('drag-over'); }
+function dropFile(e) { e.preventDefault(); dragLeave(); const f = e.dataTransfer.files[0]; if(f) processCSV(f); }
+function handleFile(e) { const f = e.target.files[0]; if(f) processCSV(f); }
 
 // --- ARTWORK PROCESSING SYSTEM ---
 const artCache = {};
